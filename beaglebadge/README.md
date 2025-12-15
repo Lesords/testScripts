@@ -103,8 +103,8 @@ echo hh > ./eeprom
 dmesg | grep -i eeprom
 
 # OSPI 测速
-dd if=/dev/zero of=/dev/mtdblock5 bs=256k count=10
-dd of=/dev/zero if=/dev/mtdblock5 bs=256k count=10
+dd if=/dev/mtdblock5 of=/tmp/test_file bs=1M count=10 oflag=direct
+dd if=/dev/zero of=/dev/mtdblock5 bs=1M count=10 oflag=direct
 
 # gpio
 ./test_gpio.sh 0

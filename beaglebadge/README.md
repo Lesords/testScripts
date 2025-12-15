@@ -52,6 +52,12 @@ i2cget -y 1 0x55 0x10 w
 # 读取电池电流
 i2cget -y 1 0x55 0x14 w
 
+# grove uart
+minicom -D /dev/ttyS4 -b 9600
+
+# mikrobus uart
+minicom -D /dev/ttyS5 -b 9600
+
 # QWIIC
 # J6
 i2cdetect  -r -y 2

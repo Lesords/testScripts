@@ -7,11 +7,36 @@ USB 直连模式下的 IP
 192.168.42.1
 ```
 
+WiFi AP 信息
+```bash
+账号：reCamera_xxxxxx (xxxxxx 为 MAC 地址后六位)
+密码：12345678
+```
+
 默认登录用户名和密码
 ```bash
 用户名: recamera
 密码: recamera
 ```
+
+工作区界面
+```bash
+http://192.168.42.1/#/workspace
+```
+
+设置界面
+```bash
+http://192.168.42.1/#/init
+```
+
+预览界面
+```bash
+http://192.168.42.1/#/dashboard
+```
+
+## 恢复出厂设置
+
+> 长按 User 按键上电，直到看到 红色指示灯常亮 后松开按键
 
 ## OTA
 

@@ -1,0 +1,12 @@
+version: '2.1'
+
+services:
+  main:
+    build: ./app
+    privileged: true
+    network_mode: host
+    restart: always
+    labels:
+      io.balena.features.supervisor-api: '1'
+      io.balena.features.dbus: '1'
+

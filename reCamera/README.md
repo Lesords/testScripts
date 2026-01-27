@@ -95,3 +95,81 @@ dmesg | grep -i mmc1
 ifconfig -a
 ip link
 ```
+
+### Halow 定频测试步骤
+
+前提条件：需要先把 wpa_supplicant_s1g 程序关闭
+
+```bash
+$ ps | grep -i wpa
+  773 root     wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf
+  789 root     wpa_supplicant_s1g -B -Dnl80211 -ihalow0 -c /etc/wpa_supplicant_s1g.conf
+ 1178 root     grep -i wpa
+$ kill -9 <pid>
+# 避免干扰，两个 wpa 程序都需要关闭
+
+$ ps | grep -i hostapd
+ 1232 root     hostapd -B /etc/hostapd_2g4.conf
+ 3668 recamera grep -i hostapd
+# kill -9 <pid>
+
+# 关闭普通 wifi
+$ ifconfig wlan0 down
+$ ifconfig wlan1 down
+```
+
+注意事项：
+PI 4B 平台需要把 halow0 改为 wlan0
+
+#### 发送测试
+
+```bash
+# 设备使能 (ifconfig 已经有 halow0 设备则可跳过此步骤)
+ifconfig halow0 up
+
+# 设置信道、带宽
+morsectrl -i halow0 channel -c 863500 -o 1 -p 1 -n 0
+
+# 参数介绍
+ -c 863500: 设置信道为863500kHz，具体见支持信道表
+ -o 1: 设置带宽为 1MHz，可选值为1、2、4、8
+ -p 1
+ -n 0
+
+# 设置带宽、速率
+morsectrl -i halow0 txrate enable -b 1 -m 0 -f 0 -t 0 -s 0
+# 参数介绍
+ -b 1: 设置带宽为 1MHz，可选值为1、2、4、8
+ -m 0: 设置速率为 MCS0，可选值为10、0~7
+ -f 0
+ -t 0
+ -s 0
+
+# 调整功率值，步进为1dB，范围-15~+15
+morsectrl -i halow0 txscaler 0
+
+# 开启发射
+morsectrl -i halow0 rpg start -s 1000 -c -1
+
+# 停止发射，下发其他信道或模式时先下发该指令
+morsectrl -i halow0 rpg stop
+```
+
+#### 接收测试
+
+```bash
+# 设备使能(ifconfig 已经有 halow0 设备则可跳过此步骤)
+ifconfig halow0 up
+
+# 设置信道、带宽等参数
+morsectrl -i halow0 channel -c 863500 -o 1 -p 1 -n 0
+
+# 开启接收
+morsectrl -i halow0 rpg start -l
+
+# 查询收包数量
+morsectrl -i halow0 rpg stats
+
+# 复位收包数量
+morsectrl -i halow0 rpg reset
+```

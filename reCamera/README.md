@@ -121,6 +121,28 @@ $ ifconfig wlan1 down
 注意事项：
 PI 4B 平台需要把 halow0 改为 wlan0
 
+#### 定频固件
+
+reCamera
+
+```bash
+# 固件原名: mm6108-dvt_14p1.bin
+# 驱动版本：v1.14.1
+# 固件信息
+[root@reCamera]~# md5sum /lib/firmware/morse/mm6108.bin
+6ad4cbcdd77e8a21c769951284de4632  /lib/firmware/morse/mm6108.bin
+```
+
+Raspberry Pi 4B
+
+```bash
+# 固件原名: mm6108-dvt.bin
+# 驱动版本：v1.12.4
+# 固件信息
+root@ekh01-ac64:~# md5sum /lib/firmware/morse/mm6108.bin
+9754ee2429e22937e21848fd08a2f0b2  /lib/firmware/morse/mm6108.bin
+```
+
 #### 发送测试
 
 ```bash

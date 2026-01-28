@@ -118,8 +118,9 @@ $ ifconfig wlan0 down
 $ ifconfig wlan1 down
 ```
 
-注意事项：
-PI 4B 平台需要把 halow0 改为 wlan0
+Raspberry Pi 4B 设备注意事项：
+- 需要把命令中的 halow0 改为 wlan0
+- 将 morsectrl 工具拷贝到设备中的 /sbin/ 文件夹下
 
 #### 定频固件
 

@@ -1,4 +1,28 @@
-测试命令
+# OSPI 启动
+
+需要使用 SD 卡启动模式, 并且 SD 卡中需要包含以下三个文件: tiboot3.bin, tispl.bin, u-boot.img
+```bash
+=> sf probe
+=> fatload mmc 1 ${loadaddr} tiboot3.bin
+=> sf update $loadaddr 0x0 $filesize
+=> fatload mmc 1 ${loadaddr} tispl.bin
+=> sf update $loadaddr 0x80000 $filesize
+=> fatload mmc 1 ${loadaddr} u-boot.img
+=> sf update $loadaddr 0x280000 $filesize
+```
+
+# DFU 模式
+
+触发条件: 使用 SD 卡启动模式, 并且检测不到 SD 卡时会出现 DFU 模式
+
+Linux 主机扫描 DFU 设备
+```bash
+sudo dfu-util -l
+```
+
+参考链接: https://software-dl.ti.com/processor-sdk-linux/esd/AM62LX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-DFU.html
+
+# 测试命令
 
 ```bash
 # rgb 测试

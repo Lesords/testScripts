@@ -27,3 +27,7 @@ sudo reboot
 pciex1-compat-pi5-overlay.dts
 pciex1-compat-pi5.dtbo
 ```
+
+## 网口工具
+
+- file: linuxpg-2.87.01.tar.bz2

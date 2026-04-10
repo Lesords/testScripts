@@ -22,6 +22,27 @@ sudo dfu-util -l
 
 参考链接: https://software-dl.ti.com/processor-sdk-linux/esd/AM62LX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-DFU.html
 
+# 蓝牙
+
+> 先使用 USB 转网口连接设备, 使得设备可以正常上网
+
+安装依赖项
+
+```bash
+apt install bluez
+apt-get install bluez-test-scripts bluez-test-tools
+
+systemctl enable bluetooth
+systemctl start bluetooth
+```
+
+拷贝 start_bluetooth.sh 脚本到设备上, 运行脚本
+
+```bash
+chmod +x start_bluetooth.sh
+./start_bluetooth.sh
+```
+
 # 测试命令
 
 ```bash

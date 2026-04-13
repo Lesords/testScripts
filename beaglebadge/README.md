@@ -43,6 +43,24 @@ chmod +x start_bluetooth.sh
 ./start_bluetooth.sh
 ```
 
+# 引脚编号
+
+```bash
+# old version - without WKUP_GPIO
+GPIO0_0: 512
+GPIO0_66: 512 + 66 = 578
+
+# new version - with WKUP_GPIO
+GPIO0_0: 519
+
+base - 519
+EMMC 复位引脚：GPIO520
+OSPI RST 引脚：GPIO531
+OSPI INT 引脚：GPIO532
+SD 电源引脚：GPIO535
+Sensor 引脚：GPIO513
+```
+
 # 测试命令
 
 ```bash

@@ -11,6 +11,33 @@
 => sf update $loadaddr 0x280000 $filesize
 ```
 
+# Low Power Modes
+
+正常睡眠
+```bash
+echo mem > /sys/power/state
+```
+
+定时唤醒
+```bash
+rtcwake -m mem -s 10
+```
+
+wifi 模块问题
+```bash
+ifconfig wlan0 down
+
+rmmod cc33xx
+rmmod cc33xx_sdio
+
+rtcwake -m mem -s 10
+
+modprobe cc33xx_sdio
+modprobe cc33xx
+
+ifconfig wlan0 up
+```
+
 # DFU 模式
 
 触发条件: 使用 SD 卡启动模式, 并且检测不到 SD 卡时会出现 DFU 模式

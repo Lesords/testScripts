@@ -49,6 +49,16 @@ sudo dfu-util -l
 
 参考链接: https://software-dl.ti.com/processor-sdk-linux/esd/AM62LX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-DFU.html
 
+# JTAG 调试
+
+使用步骤
+
+```bash
+openocd -f ./ti_am625evm.cfg
+```
+
+推荐的 openocd 版本: 0.12.0
+
 # 蓝牙
 
 > 先使用 USB 转网口连接设备, 使得设备可以正常上网

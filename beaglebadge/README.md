@@ -96,6 +96,7 @@ OSPI RST 引脚：GPIO531
 OSPI INT 引脚：GPIO532
 SD 电源引脚：GPIO535
 Sensor 引脚：GPIO513
+Boost 5V en 引脚: GPIO534
 ```
 
 # 测试命令

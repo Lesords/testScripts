@@ -80,6 +80,31 @@ chmod +x start_bluetooth.sh
 ./start_bluetooth.sh
 ```
 
+# IMU INT1 中断引脚
+
+卸载驱动
+```bash
+cd /sys/bus/i2c/devices/1-006a/driver
+echo 1-006a > ./unbind
+```
+
+配置传感器
+```bash
+# 打开加速度计 104 Hz
+i2cset -y 1 0x6a 0x10 0x40
+
+# 把 Data Ready 输出到 INT1
+i2cset -y 1 0x6a 0x0d 0x01
+
+# 关闭 "中断输出路由"（mask 掉所有到 INT1 的中断源）
+i2cset -y 1 0x6a 0x0d 0x00
+```
+
+测试注意事项
+- INT1 引脚的电阻为 R295
+- 电阻上方连接的 U33 的 INT1 引脚, 电阻下方连接的 3V3 电源
+- 测量 INT1 引脚变化, 需要晃动屏幕
+
 # 引脚编号
 
 ```bash

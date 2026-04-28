@@ -157,12 +157,15 @@ echo 0 > pwm0/enable
 
 # epaper 屏幕
 cd /mnt/
-./epaper_test
-./epaper_test_boy
+./epaper_test eagle_binary
+./epaper_test beaglebone
 
 # lora
 cd /mnt
-./sx126x_demo
+./sx126x_demo_private tx
+./sx126x_demo_private rx
+./sx126x_demo_public tx
+./sx126x_demo_public rx
 
 # IMU
 cd /sys/bus/iio/devices/iio\:device1
@@ -215,6 +218,9 @@ cd /sys/class/gpio/
 echo 603 > ./export
 echo out > ./gpio603/direction
 echo 1 > ./gpio603/value
+
+## SPI
+./lsm6dsx_spi_test -s 1000000 -m 0  /dev/spidev2.1
 
 # EMMC RST
 cd /sys/class/gpio/

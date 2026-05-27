@@ -39,3 +39,25 @@ timeout 60 glmark2-es2-drm
 # 3. 恢复桌面
 systemctl start lightdm
 ```
+
+## NPU 测试步骤
+
+测试文件
+```bash
+rknn_benchmark_Linux.tar.gz
+```
+
+拷贝文件到 RK3576-IO-Board
+```bash
+scp rknn_benchmark_Linux.tar.gz root@<IP_ADDRESS>:/root
+```
+
+解压后进入目录
+```bash
+tar -zxvf rknn_benchmark_Linux.tar.gz
+
+cd rknn_benchmark_Linux
+
+# 执行
+./start.sh
+```

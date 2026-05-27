@@ -1,6 +1,20 @@
 # RK3576-IO-Board
 
-## 压力步骤
+## EMMC 刷入步骤
+
+```bash
+# windows
+upgrade_tool.exe db rk3576_spl_loader_v1.03.102.bin
+upgrade_tool.exe wl 0 Armbian-unofficial_26.05.0-trunk_Recomputer-rk3576-module_noble_vendor_6.1.115_xfce_desktop.img
+upgrade_tool.exe rd
+
+# linux
+upgrade_tool db rk3576_spl_loader_v1.03.102.bin
+upgrade_tool wl 0 Armbian-unofficial_26.05.0-trunk_Recomputer-rk3576-module_noble_vendor_6.1.115_xfce_desktop.img
+upgrade_tool rd
+```
+
+## 压力测试步骤
 
 环境安装
 ```bash

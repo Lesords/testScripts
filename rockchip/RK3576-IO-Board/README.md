@@ -79,3 +79,20 @@ cd rknn_benchmark_Linux
 # 执行
 ./start.sh
 ```
+
+## DSI 屏幕
+
+DSI 屏幕型号
+```bash
+树莓派二代 7 英寸触摸屏
+```
+
+配置步骤
+```bash
+# 编辑配置文件
+vim /boot/armbianEnv.txt
+
+# 修改 overlay 为以下内容
+overlay_prefix=recomputer-rk3576-devkit
+overlays=raspi-7inch-touchscreen
+```

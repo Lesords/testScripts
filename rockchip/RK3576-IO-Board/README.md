@@ -23,9 +23,9 @@ stress_test.sh
 
 环境安装
 ```bash
-apt-get update
+sudo apt-get update
 
-apt install -y glmark2-es2-drm
+sudo apt install -y libmali-bifrost-g52-g24p0-x11-wayland-gbm glmark2-es2-drm
 ```
 
 测试步骤
@@ -35,6 +35,10 @@ systemctl stop lightdm
 
 # 2. 运行 GPU 压测（跑 60 秒，期间用万用表量 VDD_GPU_S0）
 timeout 60 glmark2-es2-drm
+
+# 高负载命令
+glmark2-es2-drm --run-forever --swap-mode immediate \
+    -b terrain:bloom=true:tilt-shift=true
 
 # 3. 恢复桌面
 systemctl start lightdm

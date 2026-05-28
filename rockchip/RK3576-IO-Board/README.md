@@ -96,3 +96,28 @@ vim /boot/armbianEnv.txt
 overlay_prefix=recomputer-rk3576-devkit
 overlays=raspi-7inch-touchscreen
 ```
+
+## 蓝牙测试步骤
+
+```bash
+# 查看 HCI 设备状态
+hciconfig -a
+
+# 扫描附近的蓝牙设备
+bluetoothctl --timeout 15 -- scan on
+
+# 连接蓝牙设备（以设备 MAC 地址为例）
+bluetoothctl -- connect <MAC>
+bluetoothctl -- connect D0:67:94:74:3F:CD
+
+# 断开连接
+bluetoothctl -- disconnect <MAC>
+bluetoothctl -- disconnect D0:67:94:74:3F:CD
+
+# 已配对设备列表
+bluetoothctl devices
+
+# 已连接设备的详细信息
+bluetoothctl info <MAC>
+bluetoothctl info D0:67:94:74:3F:CD
+```

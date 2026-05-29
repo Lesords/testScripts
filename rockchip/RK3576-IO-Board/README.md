@@ -14,6 +14,14 @@ upgrade_tool wl 0 Armbian-unofficial_26.05.0-trunk_Recomputer-rk3576-module_nobl
 upgrade_tool rd
 ```
 
+## 设备状态
+
+### 查看电源状态
+
+```bash
+cat /sys/kernel/debug/pm_genpd/pm_genpd_summary
+```
+
 ## 压力测试步骤
 
 环境安装
@@ -47,15 +55,23 @@ sudo apt install -y libmali-bifrost-g52-g24p0-x11-wayland-gbm glmark2-es2-drm
 # 1. 先关闭桌面（lightdm 占用 DRM master，不关无法运行 DRM 渲染测试）
 systemctl stop lightdm
 
-# 2. 运行 GPU 压测（跑 60 秒，期间用万用表量 VDD_GPU_S0）
+# 2.1 运行 GPU 测试（跑 60 秒，随机场景）
 timeout 60 glmark2-es2-drm
 
-# 高负载命令
+# 2.2 高负载命令
 glmark2-es2-drm --run-forever --swap-mode immediate \
     -b terrain:bloom=true:tilt-shift=true
 
+# 2.3 较低负载命令
+glmark2-es2-drm -b shading --run-forever
+
 # 3. 恢复桌面
 systemctl start lightdm
+```
+
+查看 GPU 负载
+```
+cat /sys/class/devfreq/27800000.gpu/load
 ```
 
 ## NPU 测试步骤
@@ -78,6 +94,11 @@ cd rknn_benchmark_Linux
 
 # 执行
 ./start.sh
+```
+
+查看 NPU 负载
+```bash
+cat /sys/kernel/debug/rknpu/load
 ```
 
 ## DSI 屏幕

@@ -142,3 +142,21 @@ bluetoothctl devices
 bluetoothctl info <MAC>
 bluetoothctl info D0:67:94:74:3F:CD
 ```
+
+## RTC 设备测试步骤
+
+安装工具
+
+```bash
+sudo apt install util-linux-extra
+```
+
+测试命令
+
+```bash
+# 设置 RTC 时间为 2024-11-24 12:00:00
+sudo hwclock --set --date "2024-11-24 12:00:00"
+
+# 查看 RTC 时间
+sudo hwclock -r
+```

@@ -92,8 +92,11 @@ tar -zxvf rknn_benchmark_Linux.tar.gz
 
 cd rknn_benchmark_Linux
 
-# 执行
+# 执行（高负载）
 ./start.sh
+
+# 单核测试(较低负载)
+./open_npu.sh
 ```
 
 查看 NPU 负载
@@ -116,6 +119,14 @@ vim /boot/armbianEnv.txt
 # 修改 overlay 为以下内容
 overlay_prefix=recomputer-rk3576-devkit
 overlays=raspi-7inch-touchscreen
+```
+
+注意事项
+```bash
+需要跳线才能正常使用 DSI 中的 I2C
+
+跳线位置：DSI 座子和 40 PIN 之间, 40 PIN 旁边
+跳线方向：DSI 座子 -> 40 PIN, 两个跳线都要
 ```
 
 ## 蓝牙测试步骤

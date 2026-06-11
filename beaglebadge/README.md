@@ -51,6 +51,12 @@ sudo dfu-util -l
 
 # JTAG 调试
 
+配置文件路径
+
+```bash
+./configs/ti_am625evm.cfg
+```
+
 使用步骤
 
 ```bash
@@ -73,7 +79,7 @@ systemctl enable bluetooth
 systemctl start bluetooth
 ```
 
-拷贝 start_bluetooth.sh 脚本到设备上, 运行脚本
+拷贝 ./scripts/start_bluetooth.sh 脚本到设备上, 运行脚本
 
 ```bash
 chmod +x start_bluetooth.sh

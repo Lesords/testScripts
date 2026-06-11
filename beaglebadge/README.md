@@ -8,6 +8,8 @@
   - [JTAG 调试](#jtag-调试)
   - [Low Power Modes](#low-power-modes)
 - [模块](#模块)
+  - [lora (EVT only)](#lora-evt-only)
+  - [EMMC (EVT only)](#emmc-evt-only)
   - [蓝牙](#蓝牙)
 - [传感器](#传感器)
   - [IMU INT0 中断引脚](#imu-int0-中断引脚)
@@ -85,6 +87,26 @@ ifconfig wlan0 up
 ```
 
 ## 模块
+
+### lora (EVT only)
+
+```bash
+cd /mnt
+./sx126x_demo_private tx
+./sx126x_demo_private rx
+./sx126x_demo_public tx
+./sx126x_demo_public rx
+```
+
+### EMMC (EVT only)
+
+```bash
+# EMMC RST
+cd /sys/class/gpio/
+echo 513 > ./export
+echo out > ./gpio513/direction
+echo 1 > ./gpio513/value
+```
 
 ### 蓝牙
 
@@ -191,13 +213,6 @@ cd /mnt/
 ./epaper_test eagle_binary
 ./epaper_test beaglebone
 
-# lora
-cd /mnt
-./sx126x_demo_private tx
-./sx126x_demo_private rx
-./sx126x_demo_public tx
-./sx126x_demo_public rx
-
 # IMU
 cd /sys/bus/iio/devices/iio\:device1
 cat in_accel_x_raw in_accel_y_raw in_accel_z_raw
@@ -252,12 +267,6 @@ echo 1 > ./gpio603/value
 
 ## SPI
 ./lsm6dsx_spi_test -s 1000000 -m 0  /dev/spidev2.1
-
-# EMMC RST
-cd /sys/class/gpio/
-echo 513 > ./export
-echo out > ./gpio513/direction
-echo 1 > ./gpio513/value
 
 # eeprom
 cd /sys/class/i2c-dev/i2c-1/device/1-0050

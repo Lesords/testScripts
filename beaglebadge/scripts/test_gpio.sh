@@ -22,6 +22,9 @@ ALL_OFFSETS=(
     65 66
 )
 
+# GPIO offsets to skip - only EVT has GPIO0_75, so we skip that one for now
+SKIP_OFFSETS=(75)
+
 echo "========================================"
 echo "GPIO Set Test Script (Target: $TARGET_VAL)"
 echo "Base GPIO: $GPIO_BASE"
@@ -29,6 +32,12 @@ echo "Total Pins: ${#ALL_OFFSETS[@]}"
 echo "========================================"
 
 for OFFSET in "${ALL_OFFSETS[@]}"; do
+    # Skip excluded offsets
+    for SKIP in "${SKIP_OFFSETS[@]}"; do
+        if [ "$OFFSET" = "$SKIP" ]; then
+            continue 2
+        fi
+    done
     GPIO_NUM=$((GPIO_BASE + OFFSET))
     GPIO_PATH="/sys/class/gpio/gpio${GPIO_NUM}"
     GPIO_NAME="GPIO0_${OFFSET}"

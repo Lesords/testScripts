@@ -1,4 +1,19 @@
-# OSPI 启动
+# Beaglebone 测试文档
+
+## 设备相关
+
+### DFU 模式
+
+触发条件: 使用 SD 卡启动模式, 并且检测不到 SD 卡时会出现 DFU 模式
+
+Linux 主机扫描 DFU 设备
+```bash
+sudo dfu-util -l
+```
+
+参考链接: https://software-dl.ti.com/processor-sdk-linux/esd/AM62LX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-DFU.html
+
+### OSPI 启动
 
 需要使用 SD 卡启动模式, 并且 SD 卡中需要包含以下三个文件: tiboot3.bin, tispl.bin, u-boot.img
 ```bash
@@ -11,7 +26,23 @@
 => sf update $loadaddr 0x280000 $filesize
 ```
 
-# Low Power Modes
+### JTAG 调试
+
+配置文件路径
+
+```bash
+./configs/ti_am625evm.cfg
+```
+
+使用步骤
+
+```bash
+openocd -f ./ti_am625evm.cfg
+```
+
+推荐的 openocd 版本: 0.12.0
+
+### Low Power Modes
 
 正常睡眠
 ```bash
@@ -38,34 +69,9 @@ modprobe cc33xx
 ifconfig wlan0 up
 ```
 
-# DFU 模式
+## 模块
 
-触发条件: 使用 SD 卡启动模式, 并且检测不到 SD 卡时会出现 DFU 模式
-
-Linux 主机扫描 DFU 设备
-```bash
-sudo dfu-util -l
-```
-
-参考链接: https://software-dl.ti.com/processor-sdk-linux/esd/AM62LX/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-DFU.html
-
-# JTAG 调试
-
-配置文件路径
-
-```bash
-./configs/ti_am625evm.cfg
-```
-
-使用步骤
-
-```bash
-openocd -f ./ti_am625evm.cfg
-```
-
-推荐的 openocd 版本: 0.12.0
-
-# 蓝牙
+### 蓝牙
 
 > 先使用 USB 转网口连接设备, 使得设备可以正常上网
 
@@ -86,7 +92,9 @@ chmod +x start_bluetooth.sh
 ./start_bluetooth.sh
 ```
 
-# IMU INT1 中断引脚
+## 传感器
+
+### IMU INT0 中断引脚
 
 卸载驱动
 ```bash
@@ -96,7 +104,7 @@ echo 1-006a > ./unbind
 
 配置传感器
 ```bash
-# 打开加速度计 104 Hz
+# 打开加速度计 103 Hz
 i2cset -y 1 0x6a 0x10 0x40
 
 # 把 Data Ready 输出到 INT1
@@ -111,7 +119,9 @@ i2cset -y 1 0x6a 0x0d 0x00
 - 电阻上方连接的 U33 的 INT1 引脚, 电阻下方连接的 3V3 电源
 - 测量 INT1 引脚变化, 需要晃动屏幕
 
-# 引脚编号
+## 外设接口
+
+### 引脚编号
 
 ```bash
 # old version - without WKUP_GPIO
@@ -130,7 +140,7 @@ Sensor 引脚：GPIO513
 Boost 5V en 引脚: GPIO534
 ```
 
-# 测试命令
+## 测试命令汇总
 
 ```bash
 # rgb 测试

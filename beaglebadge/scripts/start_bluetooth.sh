@@ -5,8 +5,10 @@ if [ -z "$(hciconfig)" ]; then
     sleep 1
 fi
 
-cd /root/tmp/
-btmon > cred.txt &
+# Kill stale btmon processes from previous runs
+pkill -x btmon 2>/dev/null
+btmon > /tmp/cred.txt 2>&1 &
+BTMON_PID=$!
 sleep 1
 
 btmgmt -i hci0 info

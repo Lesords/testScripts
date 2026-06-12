@@ -14,6 +14,27 @@ upgrade_tool wl 0 Armbian-unofficial_26.05.0-trunk_Recomputer-rk3576-module_nobl
 upgrade_tool rd
 ```
 
+## SPI Flash 刷入步骤
+
+固件路径
+```bash
+./spi-flash-boot-file/rkspi_loader.img
+```
+
+烧录命令
+```bash
+# linux
+upgrade_tool db rk3576_spl_loader_v1.03.102.bin
+upgrade_tool wl 0 rkspi_loader.img
+upgrade_tool rd
+```
+
+注意：
+```bash
+# 需要把以下设备树文件放到对应的文件系统中，否则系统启动之后会导致无法识别到 spi flash
+./spi-flash-boot-file/rk3576-recomputer-rk3576-module.dtb
+```
+
 ## 设备状态
 
 ### 查看电源状态

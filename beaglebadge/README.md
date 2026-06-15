@@ -178,16 +178,24 @@ GPIO0_0: 512
 GPIO0_66: 512 + 66 = 578
 
 # new version - with WKUP_GPIO
-GPIO0_0: 519
+WKUP_GPIO0_0: 512
+GPIO0_0:      519
 
-base - 519
-EMMC 复位引脚：GPIO520
-OSPI RST 引脚：GPIO531
-OSPI INT 引脚：GPIO532
-SD 电源引脚：GPIO535
-Sensor 引脚：GPIO513
-Boost 5V en 引脚: GPIO534
+## base - 512
+  DSI - WKUP_GPIO0_0: GPIO512
+  DSI - WKUP_GPIO0_3: GPIO515
+  Sensor Power 引脚:  GPIO513
+
+## base - 519
+  EMMC 复位引脚：GPIO520
+  OSPI RST 引脚：GPIO531
+  OSPI INT 引脚：GPIO532
+  SD 电源引脚：  GPIO535
+  Boost 5V en 引脚： GPIO534
 ```
+
+注意：
+- `USB1_DRVVBUS` 引脚默认被驱动占用，修改为 IO 模式会导致 USB 口无法使用
 
 ## 测试命令汇总
 

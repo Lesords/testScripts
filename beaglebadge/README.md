@@ -12,6 +12,7 @@
   - [EMMC (EVT only)](#emmc-evt-only)
   - [蓝牙](#蓝牙)
   - [WiFi RF 定频](#wifi-rf-定频)
+  - [蓝牙 RF 定频](#蓝牙-rf-定频)
 - [传感器](#传感器)
   - [IMU INT0 中断引脚](#imu-int0-中断引脚)
 - [外设接口](#外设接口)
@@ -176,6 +177,53 @@ cd /root
 - `tx` 是连续 WiFi 包发射，适合看 WiFi 调制信号。
 - `tone` 是单音/CW，适合看载波、频偏、杂散。
 - 脚本会自动停止 `NetworkManager.service` 和 `wpa_supplicant.service`，关闭 `wlan0` 后再进入 PLT。
+
+### 蓝牙 RF 定频
+
+文件：
+
+```text
+scripts/bluetooth_rf_test.sh
+```
+
+依赖：
+
+```bash
+apt update
+apt install -y bluez bluez-test-tools
+```
+
+拷贝到设备：
+
+```bash
+scp -p scripts/bluetooth_rf_test.sh root@<board-ip>:/root/bluetooth_rf_test.sh
+```
+
+设备端执行：
+
+```bash
+cd /root
+
+./bluetooth_rf_test.sh
+./bluetooth_rf_test.sh --restore check
+./bluetooth_rf_test.sh sweep 1 2
+./bluetooth_rf_test.sh tx 0 5 2
+./bluetooth_rf_test.sh tx 2402 5 2
+./bluetooth_rf_test.sh rx 2426 10
+./bluetooth_rf_test.sh stop
+./bluetooth_rf_test.sh restore
+```
+
+参数：
+
+```text
+channel range: 0..39
+freq_mhz = 2402 + channel * 2
+0=2402 MHz, 12=2426 MHz, 19=2440 MHz, 39=2480 MHz
+power_index: 0=0 dBm, 1=5 dBm, 2=10 dBm, 3=20 dBm
+packet_len default: 37
+payload default: 0 (PRBS9)
+```
 
 ## 传感器
 

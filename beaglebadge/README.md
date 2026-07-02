@@ -159,14 +159,29 @@ cd /root
 # 查看参数说明
 ./wifi_rf_test.sh
 
-# ch6, 1 包链路检查
+# ch6, 默认 g/6m, 1 包链路检查
 ./wifi_rf_test.sh check
 
-# ch6 连续发包 30 秒，用于频谱仪测试
+# ch6, g/6m, 连续发包 30 秒
 ./wifi_rf_test.sh tx 6 30
+
+# ch6, 11b/1 Mbps, 连续发包 30 秒
+./wifi_rf_test.sh tx 6 30 b 1m
+
+# ch6, 11n20/MCS0, 连续发包 30 秒
+./wifi_rf_test.sh tx 6 30 n20 mcs0
+
+# ch6, 11ax20/MCS0, 连续发包 30 秒
+./wifi_rf_test.sh tx 6 30 ax20 mcs0
+
+# 设置功率、包长、包间隔后发包
+TX_POWER=31 TX_LENGTH=1500 TX_DELAY=50 ./wifi_rf_test.sh tx 6 30 ax20 mcs0
 
 # ch6 单音 10 秒，offset=0
 ./wifi_rf_test.sh tone 6 10 0
+
+# ch6 单音 +1 MHz，offset 每档 0.25 MHz
+./wifi_rf_test.sh tone 6 10 4
 
 # 异常中断后清理 TX/tone 并退出 PLT
 ./wifi_rf_test.sh stop
@@ -174,9 +189,19 @@ cd /root
 
 说明：
 - `check` 只发 1 个包，用于确认 PLT、定频、TX start/stop 链路正常。
-- `tx` 是连续 WiFi 包发射，适合看 WiFi 调制信号。
-- `tone` 是单音/CW，适合看载波、频偏、杂散。
+- `tx` 是连续 WiFi 调制包发射，用于 b/g/n20/ax20 模式下的 RF 测试。
+- `tone` 是单音/CW，只支持 single tone，不支持切换 b/g/n20/ax20。
+- `TX_POWER` 是发射功率等级，范围 `0..31`，约等于 `-10..+21 dBm` 请求值，实际功率以仪器测量为准。
+- `TX_LENGTH` 是包长，默认 `1500` bytes；`TX_DELAY` 是包间隔，默认 `50 us`。
 - 脚本会自动停止 `NetworkManager.service` 和 `wpa_supplicant.service`，关闭 `wlan0` 后再进入 PLT。
+
+`tx` 支持的模式和速率：
+
+```text
+b:        1m, 2m, 5.5m, 11m
+g:        6m, 9m, 12m, 18m, 24m, 36m, 48m, 54m
+n20/ax20: mcs0..mcs7
+```
 
 ### 蓝牙 RF 定频
 

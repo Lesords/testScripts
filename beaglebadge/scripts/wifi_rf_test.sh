@@ -5,12 +5,13 @@ set -e
 usage() {
     cat <<EOF
 Usage:
-  ./wifi_rf_test.sh                         Show this help
-  ./wifi_rf_test.sh check                   ch6, 1-packet link check
-  ./wifi_rf_test.sh tx [channel] [seconds]  Continuous packet TX, default ch6/30s
+  ./wifi_rf_test.sh                                Show this help
+  ./wifi_rf_test.sh check [mode] [rate]            ch6, 1-packet link check
+  ./wifi_rf_test.sh tx [channel] [seconds] [mode] [rate]
+                                                   Continuous packet TX, default ch6/30s/g/6m
   ./wifi_rf_test.sh tone [channel] [seconds] [offset]
-                                            Single tone, default ch6/10s/0
-  ./wifi_rf_test.sh stop                    Best-effort stop and leave PLT
+                                                   Single tone, default ch6/10s/0
+  ./wifi_rf_test.sh stop                           Best-effort stop and leave PLT
 
 Channel/Band mapping:
   2.4 GHz band   BAND=0, channels 1..13, freq_mhz = 2407 + channel * 5
@@ -23,12 +24,27 @@ Defaults:
   seconds         tx=30, tone=10, check=1
   BAND            auto from channel when unset; set BAND=0 or BAND=1 to force
   BANDWIDTH       0
+  mode            g
+  rate            default by mode: b=1m, g=6m, n20=mcs0, ax20=mcs0
+  TX_LENGTH       1500 bytes
+  TX_DELAY        50 us
+  TX_POWER        0 (-10 dBm by calibrator level table, valid 0..31)
+
+Mode/Rate mapping:
+  b               11b long preamble: 1m, 2m, 5.5m, 11m
+  g               11g legacy OFDM: 6m, 9m, 12m, 18m, 24m, 36m, 48m, 54m
+  n20             11n HT20 mixed mode: mcs0..mcs7
+  ax20            11ax HE20 SU: mcs0..mcs7
 
 Examples:
-  ./wifi_rf_test.sh tx 6 30                 2.4 GHz ch6, 2437 MHz, 30s
+  ./wifi_rf_test.sh tx 6 30                 2.4 GHz ch6, 2437 MHz, g/6m, 30s
+  ./wifi_rf_test.sh tx 6 30 b 1m            2.4 GHz ch6, 11b/1 Mbps, 30s
+  ./wifi_rf_test.sh tx 6 30 n20 mcs0        2.4 GHz ch6, 11n20/MCS0, 30s
+  ./wifi_rf_test.sh tx 6 30 ax20 mcs0       2.4 GHz ch6, 11ax20/MCS0, 30s
+  TX_DELAY=1000 TX_LENGTH=100 ./wifi_rf_test.sh tx 6 30 g 6m
+  TX_POWER=31 ./wifi_rf_test.sh tx 6 30 g 6m
   ./wifi_rf_test.sh tone 11 10 0            2.4 GHz ch11, 2462 MHz, 10s
-  ./wifi_rf_test.sh tx 36 30                5 GHz ch36, 5180 MHz, 30s
-  BAND=1 ./wifi_rf_test.sh tx 149 30        Force 5 GHz ch149, 5745 MHz
+  ./wifi_rf_test.sh tx 36 30 g 6m           5 GHz ch36, 5180 MHz, g/6m, 30s
 EOF
 }
 
@@ -46,6 +62,9 @@ IFACE=${IFACE:-wlan0}
 BAND=${BAND:-}
 BANDWIDTH=${BANDWIDTH:-0}
 MODE=${1:-}
+TX_LENGTH=${TX_LENGTH:-1500}
+TX_DELAY=${TX_DELAY:-50}
+TX_POWER=${TX_POWER:-0}
 
 case "$MODE" in
     ""|-h|--help|help) usage; exit 0 ;;
@@ -125,6 +144,92 @@ channel_freq_mhz() {
     esac
 }
 
+normalize_wifi_mode() {
+    mode=$(printf '%s' "${1:-g}" | tr 'A-Z' 'a-z')
+
+    case "$mode" in
+        b|11b) printf 'b\n' ;;
+        g|11g) printf 'g\n' ;;
+        n|n20|11n|11n20|ht|ht20) printf 'n20\n' ;;
+        ax|ax20|11ax|11ax20|he|he20) printf 'ax20\n' ;;
+        *) die "invalid WiFi mode: $1 (expected: b, g, n20, ax20)" ;;
+    esac
+}
+
+default_rate_for_mode() {
+    case "$1" in
+        b) printf '1m\n' ;;
+        g) printf '6m\n' ;;
+        n20|ax20) printf 'mcs0\n' ;;
+        *) die "invalid WiFi mode: $1" ;;
+    esac
+}
+
+preamble_for_mode() {
+    case "$1" in
+        b) printf '1\n' ;;
+        g) printf '2\n' ;;
+        n20) printf '3\n' ;;
+        ax20) printf '5\n' ;;
+        *) die "invalid WiFi mode: $1" ;;
+    esac
+}
+
+phy_rate_for_mode() {
+    mode=$1
+    rate=$(printf '%s' "$2" | tr 'A-Z' 'a-z')
+    rate=${rate%bps}
+
+    case "$mode" in
+        b)
+            case "$rate" in
+                1|1m) printf '1\n' ;;
+                2|2m) printf '2\n' ;;
+                5.5|5.5m|5_5|5_5m) printf '3\n' ;;
+                11|11m) printf '4\n' ;;
+                *) die "invalid 11b rate: $2 (expected: 1m, 2m, 5.5m, 11m)" ;;
+            esac
+            ;;
+        g)
+            case "$rate" in
+                6|6m) printf '5\n' ;;
+                9|9m) printf '6\n' ;;
+                12|12m) printf '7\n' ;;
+                18|18m) printf '8\n' ;;
+                24|24m) printf '9\n' ;;
+                36|36m) printf '10\n' ;;
+                48|48m) printf '11\n' ;;
+                54|54m) printf '12\n' ;;
+                *) die "invalid 11g rate: $2 (expected: 6m, 9m, 12m, 18m, 24m, 36m, 48m, 54m)" ;;
+            esac
+            ;;
+        n20|ax20)
+            case "$rate" in
+                mcs0|0|13) printf '13\n' ;;
+                mcs1|1|14) printf '14\n' ;;
+                mcs2|2|15) printf '15\n' ;;
+                mcs3|3|16) printf '16\n' ;;
+                mcs4|4|17) printf '17\n' ;;
+                mcs5|5|18) printf '18\n' ;;
+                mcs6|6|19) printf '19\n' ;;
+                mcs7|7|20) printf '20\n' ;;
+                *) die "invalid $mode rate: $2 (expected: mcs0..mcs7)" ;;
+            esac
+            ;;
+        *)
+            die "invalid WiFi mode: $mode"
+            ;;
+    esac
+}
+
+resolve_tx_params() {
+    TX_WIFI_MODE=$(normalize_wifi_mode "${1:-${WIFI_MODE:-g}}")
+    TX_RATE=${2:-${WIFI_RATE:-}}
+    [ -n "$TX_RATE" ] || TX_RATE=$(default_rate_for_mode "$TX_WIFI_MODE")
+    TX_PREAMBLE_TYPE=$(preamble_for_mode "$TX_WIFI_MODE")
+    TX_PHY_RATE=$(phy_rate_for_mode "$TX_WIFI_MODE" "$TX_RATE")
+}
+
 log_channel_params() {
     ch=$1
     band=$2
@@ -158,15 +263,28 @@ leave_plt() {
 
 set_tx() {
     pkt_mode=$1
+    tx_mode=${2:-${WIFI_MODE:-g}}
+    tx_rate=${3:-${WIFI_RATE:-}}
+    tx_length=$(to_dec "$TX_LENGTH")
+    tx_delay=$(to_dec "$TX_DELAY")
+    tx_power=$(to_dec "$TX_POWER")
     extra=""
     [ "$pkt_mode" = "2" ] && extra="-num_pkts 1"
+
+    [ "$tx_length" -ge 100 ] && [ "$tx_length" -le 3500 ] || die "TX_LENGTH must be 100..3500 bytes"
+    [ "$tx_delay" -ge 50 ] && [ "$tx_delay" -le 1000000 ] || die "TX_DELAY must be 50..1000000 us"
+    [ "$tx_power" -ge 0 ] && [ "$tx_power" -le 31 ] || die "TX_POWER must be 0..31"
+
+    resolve_tx_params "$tx_mode" "$tx_rate"
+    log "TX waveform: mode=$TX_WIFI_MODE, rate=$TX_RATE, preamble_type=$TX_PREAMBLE_TYPE, phy_rate=$TX_PHY_RATE"
+    log "TX packet: length=${tx_length} bytes, delay=${tx_delay}us, power_level=$tx_power"
 
     "$CAL" "$IFACE" cc33xx_plt set_manual_calib -tx 1
     "$CAL" "$IFACE" cc33xx_plt set_tx -default 0
     # shellcheck disable=SC2086
     "$CAL" "$IFACE" cc33xx_plt set_tx \
-        -preamble_type 2 -phy_rate 5 -tx_power 0 \
-        -length const packet 100 -delay 1000 \
+        -preamble_type "$TX_PREAMBLE_TYPE" -phy_rate "$TX_PHY_RATE" -tx_power "$tx_power" \
+        -length const packet "$tx_length" -delay "$tx_delay" \
         -pkt_mode "$pkt_mode" $extra \
         -data_mode 2 -cca 0 \
         -src_addr 04:05:05:05:05:04 \
@@ -175,10 +293,12 @@ set_tx() {
 
 case "$MODE" in
     check)
+        tx_mode=${2:-${WIFI_MODE:-g}}
+        tx_rate=${3:-${WIFI_RATE:-}}
         trap leave_plt INT TERM EXIT
-        log "check parameters: channel=6, packet_count=1, duration=1s, tx_power=0 (calibrator set_tx value)"
+        log "check parameters: channel=6, packet_count=1, duration=1s, mode=${tx_mode}, rate=${tx_rate:-default}, tx_power=${TX_POWER} (calibrator set_tx level)"
         enter_plt 6
-        set_tx 2
+        set_tx 2 "$tx_mode" "$tx_rate"
         "$CAL" "$IFACE" cc33xx_plt start_tx
         sleep 1
         trap - INT TERM EXIT
@@ -187,10 +307,12 @@ case "$MODE" in
     tx)
         channel=${2:-6}
         seconds=${3:-30}
+        tx_mode=${4:-${WIFI_MODE:-g}}
+        tx_rate=${5:-${WIFI_RATE:-}}
         trap leave_plt INT TERM EXIT
-        log "TX parameters: channel=$channel, duration=${seconds}s, tx_power=0 (calibrator set_tx value)"
+        log "TX parameters: channel=$channel, duration=${seconds}s, mode=${tx_mode}, rate=${tx_rate:-default}, tx_power=${TX_POWER} (calibrator set_tx level)"
         enter_plt "$channel"
-        set_tx 0
+        set_tx 0 "$tx_mode" "$tx_rate"
         "$CAL" "$IFACE" cc33xx_plt start_tx
         sleep "$seconds"
         trap - INT TERM EXIT

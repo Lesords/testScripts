@@ -11,6 +11,7 @@
   - [lora (EVT only)](#lora-evt-only)
   - [EMMC (EVT only)](#emmc-evt-only)
   - [蓝牙](#蓝牙)
+  - [WiFi RF 定频](#wifi-rf-定频)
 - [传感器](#传感器)
   - [IMU INT0 中断引脚](#imu-int0-中断引脚)
 - [外设接口](#外设接口)
@@ -128,6 +129,53 @@ systemctl start bluetooth
 chmod +x start_bluetooth.sh
 ./start_bluetooth.sh
 ```
+
+### WiFi RF 定频
+
+仓库已包含 CC33xx RF 测试脚本和 arm64 `calibrator` 工具：
+
+```text
+scripts/wifi_rf_test.sh
+tools/calibrator
+```
+
+直接拷贝文件到设备目标路径：
+
+```bash
+scp -p scripts/wifi_rf_test.sh root@<board-ip>:/root/wifi_rf_test.sh
+scp -p tools/calibrator root@<board-ip>:/usr/bin/calibrator
+```
+
+在设备端进入脚本目录：
+
+```bash
+cd /root
+```
+
+执行定频测试：
+
+```bash
+# 查看参数说明
+./wifi_rf_test.sh
+
+# ch6, 1 包链路检查
+./wifi_rf_test.sh check
+
+# ch6 连续发包 30 秒，用于频谱仪测试
+./wifi_rf_test.sh tx 6 30
+
+# ch6 单音 10 秒，offset=0
+./wifi_rf_test.sh tone 6 10 0
+
+# 异常中断后清理 TX/tone 并退出 PLT
+./wifi_rf_test.sh stop
+```
+
+说明：
+- `check` 只发 1 个包，用于确认 PLT、定频、TX start/stop 链路正常。
+- `tx` 是连续 WiFi 包发射，适合看 WiFi 调制信号。
+- `tone` 是单音/CW，适合看载波、频偏、杂散。
+- 脚本会自动停止 `NetworkManager.service` 和 `wpa_supplicant.service`，关闭 `wlan0` 后再进入 PLT。
 
 ## 传感器
 

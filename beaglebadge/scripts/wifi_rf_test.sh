@@ -26,9 +26,10 @@ Defaults:
   BANDWIDTH       0
   mode            g
   rate            default by mode: b=1m, g=6m, n20=mcs0, ax20=mcs0
-  TX_LENGTH       1500 bytes
+  TX_LENGTH       1500 bytes; const packet length, non-MCS 0..3500, MCS 0..16000
   TX_DELAY        50 us
   TX_POWER        0 (-10 dBm by calibrator level table, valid 0..31)
+  tone offset     -40..40 steps, 0.25 MHz per step, relative to tuned channel center
 
 Mode/Rate mapping:
   b               11b long preamble: 1m, 2m, 5.5m, 11m
@@ -86,6 +87,15 @@ fi
 to_dec() {
     case "${1:-}" in
         ""|*[!0-9]*) die "invalid number: $1" ;;
+    esac
+    printf '%s\n' "$1"
+}
+
+to_int() {
+    case "${1:-}" in
+        ""|-) die "invalid integer: $1" ;;
+        -*) n=${1#-}; case "$n" in ""|*[!0-9]*) die "invalid integer: $1" ;; esac ;;
+        *[!0-9]*) die "invalid integer: $1" ;;
     esac
     printf '%s\n' "$1"
 }
@@ -237,6 +247,24 @@ log_channel_params() {
     log "channel parameters: channel=$ch, band=$band ($(band_name "$band")), center_freq=${freq}MHz, bandwidth=$BANDWIDTH"
 }
 
+validate_seconds() {
+    seconds=$(to_dec "$1")
+    [ "$seconds" -ge 1 ] || die "seconds must be >= 1"
+    printf '%s\n' "$seconds"
+}
+
+validate_bandwidth() {
+    bw=$(to_dec "$BANDWIDTH")
+    [ "$bw" -eq 0 ] || die "BANDWIDTH=$bw is not documented for this script; supported value is 0"
+    BANDWIDTH=$bw
+}
+
+validate_tone_offset() {
+    offset=$(to_int "$1")
+    [ "$offset" -ge -40 ] && [ "$offset" -le 40 ] || die "tone offset must be -40..40"
+    printf '%s\n' "$offset"
+}
+
 stop_services() {
     systemctl stop NetworkManager.service wpa_supplicant.service 2>/dev/null || true
     pkill -x wpa_supplicant 2>/dev/null || true
@@ -249,6 +277,7 @@ enter_plt() {
     validate_channel_for_band "$ch" "$band"
     freq=$(channel_freq_mhz "$ch" "$band")
 
+    validate_bandwidth
     log_channel_params "$ch" "$band" "$freq"
     stop_services
     "$CAL" "$IFACE" plt power_mode on
@@ -271,11 +300,15 @@ set_tx() {
     extra=""
     [ "$pkt_mode" = "2" ] && extra="-num_pkts 1"
 
-    [ "$tx_length" -ge 100 ] && [ "$tx_length" -le 3500 ] || die "TX_LENGTH must be 100..3500 bytes"
     [ "$tx_delay" -ge 50 ] && [ "$tx_delay" -le 1000000 ] || die "TX_DELAY must be 50..1000000 us"
     [ "$tx_power" -ge 0 ] && [ "$tx_power" -le 31 ] || die "TX_POWER must be 0..31"
 
     resolve_tx_params "$tx_mode" "$tx_rate"
+    if [ "$TX_PHY_RATE" -ge 13 ]; then
+        [ "$tx_length" -ge 0 ] && [ "$tx_length" -le 16000 ] || die "TX_LENGTH must be 0..16000 bytes for MCS rates"
+    else
+        [ "$tx_length" -ge 0 ] && [ "$tx_length" -le 3500 ] || die "TX_LENGTH must be 0..3500 bytes for non-MCS rates"
+    fi
     log "TX waveform: mode=$TX_WIFI_MODE, rate=$TX_RATE, preamble_type=$TX_PREAMBLE_TYPE, phy_rate=$TX_PHY_RATE"
     log "TX packet: length=${tx_length} bytes, delay=${tx_delay}us, power_level=$tx_power"
 
@@ -306,7 +339,7 @@ case "$MODE" in
         ;;
     tx)
         channel=${2:-6}
-        seconds=${3:-30}
+        seconds=$(validate_seconds "${3:-30}")
         tx_mode=${4:-${WIFI_MODE:-g}}
         tx_rate=${5:-${WIFI_RATE:-}}
         trap leave_plt INT TERM EXIT
@@ -320,8 +353,8 @@ case "$MODE" in
         ;;
     tone)
         channel=${2:-6}
-        seconds=${3:-10}
-        offset=${4:-0}
+        seconds=$(validate_seconds "${3:-10}")
+        offset=$(validate_tone_offset "${4:-0}")
         trap leave_plt INT TERM EXIT
         log "tone parameters: channel=$channel, duration=${seconds}s, offset=$offset"
         enter_plt "$channel"

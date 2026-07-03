@@ -192,7 +192,10 @@ TX_POWER=31 TX_LENGTH=1500 TX_DELAY=50 ./wifi_rf_test.sh tx 6 30 ax20 mcs0
 - `tx` 是连续 WiFi 调制包发射，用于 b/g/n20/ax20 模式下的 RF 测试。
 - `tone` 是单音/CW，只支持 single tone，不支持切换 b/g/n20/ax20。
 - `TX_POWER` 是发射功率等级，范围 `0..31`，约等于 `-10..+21 dBm` 请求值，实际功率以仪器测量为准。
-- `TX_LENGTH` 是包长，默认 `1500` bytes；`TX_DELAY` 是包间隔，默认 `50 us`。
+- `TX_LENGTH` 是包长，默认 `1500` bytes；非 MCS 速率范围 `0..3500`，MCS 速率范围 `0..16000`。
+- `TX_DELAY` 是包间隔，默认 `50 us`，范围 `50..1000000 us`。
+- `BANDWIDTH` 当前只使用 `0`。
+- `tone offset` 范围 `-40..40`，每档 `0.25 MHz`，相对当前 channel 中心频点偏移。
 - 脚本会自动停止 `NetworkManager.service` 和 `wpa_supplicant.service`，关闭 `wlan0` 后再进入 PLT。
 
 `tx` 支持的模式和速率：

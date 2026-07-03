@@ -32,9 +32,9 @@ usage()
 Usage:
   bluetooth_rf_test.sh
   bluetooth_rf_test.sh check
-  bluetooth_rf_test.sh sweep [seconds] [power_index]
-  bluetooth_rf_test.sh tx <channel|freq_mhz> [seconds] [power_index] [packet_len] [payload]
-  bluetooth_rf_test.sh rx <channel|freq_mhz> [seconds]
+  bluetooth_rf_test.sh sweep [seconds] [power_index] [phy]
+  bluetooth_rf_test.sh tx <channel|freq_mhz> [seconds] [power_index] [packet_len] [payload] [phy]
+  bluetooth_rf_test.sh rx <channel|freq_mhz> [seconds] [phy]
   bluetooth_rf_test.sh prep
   bluetooth_rf_test.sh stop
   bluetooth_rf_test.sh restore
@@ -50,6 +50,7 @@ Defaults:
   power_index      2  (0=0 dBm, 1=5 dBm, 2=10 dBm, 3=20 dBm)
   packet_len       37 bytes
   payload          0  (PRBS9)
+  phy              1m (1m uses TI-documented legacy DTM; 2m uses standard enhanced DTM)
 
 Channel/Frequency:
   channel range    0..39
@@ -57,6 +58,11 @@ Channel/Frequency:
   formula          freq_mhz = 2402 + channel * 2
   examples         0=2402, 12=2426, 19=2440, 39=2480
   note             DTM channel is not BLE advertising channel; Adv 37/38/39 map to DTM 0/12/39.
+
+PHY:
+  1m               LE 1M PHY, TI-documented legacy DTM: TX 0x201E, RX 0x201D
+  2m               LE 2M PHY, standard enhanced DTM: TX 0x2034, RX 0x2033
+                   Enhanced DTM is not listed in the local TI CC33xx HCI table; verify by HCI status on board.
 
 Environment:
   WLAN_IF          WiFi netdev used by calibrator, default wlan0
@@ -68,8 +74,10 @@ Examples:
   ./bluetooth_rf_test.sh check
   ./bluetooth_rf_test.sh sweep
   ./bluetooth_rf_test.sh tx 0 5 2
+  ./bluetooth_rf_test.sh tx 0 5 2 37 0 2m
   ./bluetooth_rf_test.sh tx 2426 10 2
   ./bluetooth_rf_test.sh rx 2480 10
+  ./bluetooth_rf_test.sh rx 2480 10 2m
   ./bluetooth_rf_test.sh --restore sweep 1 2
 EOF
 }
@@ -144,6 +152,24 @@ payload_name()
 	esac
 }
 
+normalize_phy()
+{
+	case "$(printf '%s' "${1:-1m}" | tr 'A-Z' 'a-z')" in
+		1|1m|le1m) printf '1m\n' ;;
+		2|2m|le2m) printf '2m\n' ;;
+		*) die "invalid phy: $1 (expected 1m or 2m)" ;;
+	esac
+}
+
+phy_hex()
+{
+	case "$1" in
+		1m) printf '0x01\n' ;;
+		2m) printf '0x02\n' ;;
+		*) die "invalid phy: $1" ;;
+	esac
+}
+
 log_tx_params()
 {
 	ch=$1
@@ -151,16 +177,18 @@ log_tx_params()
 	power=$3
 	len=$4
 	payload=$5
+	phy=$6
 	freq=$(channel_freq "$ch")
-	log "TX parameters: channel=$ch (${freq}MHz), duration=${seconds}s, power_index=$power ($(power_dbm "$power")), packet_len=$len, payload=$payload ($(payload_name "$payload"))"
+	log "TX parameters: channel=$ch (${freq}MHz), duration=${seconds}s, power_index=$power ($(power_dbm "$power")), packet_len=$len, payload=$payload ($(payload_name "$payload")), phy=$phy"
 }
 
 log_rx_params()
 {
 	ch=$1
 	seconds=$2
+	phy=$3
 	freq=$(channel_freq "$ch")
-	log "RX parameters: channel=$ch (${freq}MHz), duration=${seconds}s"
+	log "RX parameters: channel=$ch (${freq}MHz), duration=${seconds}s, phy=$phy"
 }
 
 find_calibrator()
@@ -286,8 +314,15 @@ expect_hex()
 
 	printf '%s\n' "$HCI_OUT" | grep -qi "$pattern" && return 0
 
-	if printf '%s\n' "$HCI_OUT" | grep -qi '01 1E 20 21'; then
+	if printf '%s\n' "$HCI_OUT" | grep -Eqi '01 (1D|1E|33|34) 20 21'; then
 		die "$label failed: status 0x21, normal BLE advertising/connectable role is still active"
+	fi
+
+	if printf '%s\n' "$HCI_OUT" | grep -qi '01 34 20 01'; then
+		die "$label failed: status 0x01, enhanced DTM/2M PHY is not supported by this controller or firmware"
+	fi
+	if printf '%s\n' "$HCI_OUT" | grep -qi '01 33 20 01'; then
+		die "$label failed: status 0x01, enhanced DTM/2M PHY is not supported by this controller or firmware"
 	fi
 
 	die "$label failed: expected HCI bytes '$pattern'"
@@ -333,6 +368,7 @@ tx_test()
 	power=${3:-2}
 	len=${4:-37}
 	payload=${5:-0}
+	phy=$(normalize_phy "${6:-1m}")
 
 	seconds=$(to_dec "$seconds")
 	[ "$seconds" -ge 1 ] || die "seconds must be >= 1"
@@ -341,49 +377,65 @@ tx_test()
 	len_hex=$(byte_hex "$len" 0 255 "packet_len")
 	payload_hex=$(byte_hex "$payload" 0 7 "payload")
 	freq=$(channel_freq "$ch")
+	phy_h=$(phy_hex "$phy")
 
 	prepare_controller
 	enable_ble_plt
 	set_dtm_power "$power"
 
-	log_tx_params "$ch" "$seconds" "$power" "$len" "$payload"
-	log "starting LE TX test"
-	hci_cmd 0x08 0x001e "$ch_hex" "$len_hex" "$payload_hex"
-	expect_hex "LE Transmitter Test" '01 1E 20 00'
+	log_tx_params "$ch" "$seconds" "$power" "$len" "$payload" "$phy"
+	if [ "$phy" = "2m" ]; then
+		log "starting LE Enhanced TX test"
+		hci_cmd 0x08 0x0034 "$ch_hex" "$len_hex" "$payload_hex" "$phy_h"
+		expect_hex "LE Enhanced Transmitter Test" '01 34 20 00'
+	else
+		log "starting LE TX test"
+		hci_cmd 0x08 0x001e "$ch_hex" "$len_hex" "$payload_hex"
+		expect_hex "LE Transmitter Test" '01 1E 20 00'
+	fi
 	TEST_ACTIVE=1
 	sleep "$seconds"
 	le_test_end
-	log "TX test completed successfully on ${freq}MHz"
+	log "TX test completed successfully on ${freq}MHz, phy=$phy"
 }
 
 rx_test()
 {
 	ch=$(channel_from_arg "$1")
 	seconds=${2:-1}
+	phy=$(normalize_phy "${3:-1m}")
 
 	seconds=$(to_dec "$seconds")
 	[ "$seconds" -ge 1 ] || die "seconds must be >= 1"
 
 	ch_hex=$(byte_hex "$ch" 0 39 "channel")
 	freq=$(channel_freq "$ch")
+	phy_h=$(phy_hex "$phy")
 
 	prepare_controller
 	enable_ble_plt
 
-	log_rx_params "$ch" "$seconds"
-	log "starting LE RX test"
-	hci_cmd 0x08 0x001d "$ch_hex"
-	expect_hex "LE Receiver Test" '01 1D 20 00'
+	log_rx_params "$ch" "$seconds" "$phy"
+	if [ "$phy" = "2m" ]; then
+		log "starting LE Enhanced RX test"
+		hci_cmd 0x08 0x0033 "$ch_hex" "$phy_h" 0x00
+		expect_hex "LE Enhanced Receiver Test" '01 33 20 00'
+	else
+		log "starting LE RX test"
+		hci_cmd 0x08 0x001d "$ch_hex"
+		expect_hex "LE Receiver Test" '01 1D 20 00'
+	fi
 	TEST_ACTIVE=1
 	sleep "$seconds"
 	le_test_end
-	log "RX test completed successfully on ${freq}MHz"
+	log "RX test completed successfully on ${freq}MHz, phy=$phy"
 }
 
 sweep_test()
 {
 	seconds=${1:-1}
 	power=${2:-2}
+	phy=$(normalize_phy "${3:-1m}")
 
 	seconds=$(to_dec "$seconds")
 	[ "$seconds" -ge 1 ] || die "seconds must be >= 1"
@@ -394,17 +446,23 @@ sweep_test()
 
 	for ch in 0 12 39; do
 		ch_hex=$(byte_hex "$ch" 0 39 "channel")
-		freq=$(channel_freq "$ch")
-		log_tx_params "$ch" "$seconds" "$power" 37 0
-		log "starting LE TX test"
-		hci_cmd 0x08 0x001e "$ch_hex" 0x25 0x00
-		expect_hex "LE Transmitter Test" '01 1E 20 00'
+		phy_h=$(phy_hex "$phy")
+		log_tx_params "$ch" "$seconds" "$power" 37 0 "$phy"
+		if [ "$phy" = "2m" ]; then
+			log "starting LE Enhanced TX test"
+			hci_cmd 0x08 0x0034 "$ch_hex" 0x25 0x00 "$phy_h"
+			expect_hex "LE Enhanced Transmitter Test" '01 34 20 00'
+		else
+			log "starting LE TX test"
+			hci_cmd 0x08 0x001e "$ch_hex" 0x25 0x00
+			expect_hex "LE Transmitter Test" '01 1E 20 00'
+		fi
 		TEST_ACTIVE=1
 		sleep "$seconds"
 		le_test_end
 	done
 
-	log "TX sweep completed successfully"
+	log "TX sweep completed successfully, phy=$phy"
 }
 
 restore_bluetooth()

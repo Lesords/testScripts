@@ -234,10 +234,12 @@ cd /root
 
 ./bluetooth_rf_test.sh
 ./bluetooth_rf_test.sh --restore check
-./bluetooth_rf_test.sh sweep 1 2
-./bluetooth_rf_test.sh tx 0 5 2
-./bluetooth_rf_test.sh tx 2402 5 2
-./bluetooth_rf_test.sh rx 2426 10
+./bluetooth_rf_test.sh sweep 1 2 1m
+./bluetooth_rf_test.sh sweep 1 2 2m
+./bluetooth_rf_test.sh tx 0 5 2 37 0 1m
+./bluetooth_rf_test.sh tx 0 5 2 37 0 2m
+./bluetooth_rf_test.sh rx 12 10 1m
+./bluetooth_rf_test.sh rx 12 10 2m
 ./bluetooth_rf_test.sh stop
 ./bluetooth_rf_test.sh restore
 ```
@@ -245,13 +247,20 @@ cd /root
 参数：
 
 ```text
+tx: tx <channel|freq_mhz> [seconds] [power_index] [packet_len] [payload] [phy]
+rx: rx <channel|freq_mhz> [seconds] [phy]
 channel range: 0..39
 freq_mhz = 2402 + channel * 2
 0=2402 MHz, 12=2426 MHz, 19=2440 MHz, 39=2480 MHz
 power_index: 0=0 dBm, 1=5 dBm, 2=10 dBm, 3=20 dBm
 packet_len default: 37
 payload default: 0 (PRBS9)
+phy default: 1m
+1m: LE 1M legacy DTM, TX 0x201E, RX 0x201D
+2m: LE 2M enhanced DTM, TX 0x2034, RX 0x2033
 ```
+
+说明：蓝牙 `tx/rx` 是 BLE DTM 固定信道测试包，不是 WiFi `tone` 那种单音/CW。
 
 ## 传感器
 

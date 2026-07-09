@@ -1,5 +1,159 @@
 # InwayConnect-CM5
 
+## 手动加载驱动步骤
+
+```bash
+# 拉取仓库
+git clone https://github.com/Lesords/seeed-linux-dtoverlays.git -b reachy_mini --depth=1
+
+# 部署
+sudo ./scripts/reTerminal.sh --device rpi-cm5-inway --keep-kernel
+
+# 重启设备
+sudo reboot
+```
+
+## LED
+
+```bash
+# 打开
+sudo bash -c "echo 1 > /sys/class/leds/led-red/brightness"
+sudo bash -c "echo 1 > /sys/class/leds/led-blue/brightness"
+sudo bash -c "echo 1 > /sys/class/leds/led-green/brightness"
+sudo bash -c "echo 1 > /sys/class/leds/led_usr1/brightness"
+sudo bash -c "echo 1 > /sys/class/leds/led_usr2/brightness"
+sudo bash -c "echo 1 > /sys/class/leds/led_usr3/brightness"
+
+# 关闭
+sudo bash -c "echo 0 > /sys/class/leds/led-red/brightness"
+sudo bash -c "echo 0 > /sys/class/leds/led-blue/brightness"
+sudo bash -c "echo 0 > /sys/class/leds/led-green/brightness"
+sudo bash -c "echo 0 > /sys/class/leds/led_usr1/brightness"
+sudo bash -c "echo 0 > /sys/class/leds/led_usr2/brightness"
+sudo bash -c "echo 0 > /sys/class/leds/led_usr3/brightness"
+```
+
+## eeprom
+
+```bash
+cd /sys/bus/i2c/devices/3-0050
+
+# 修改 eeprom 信息
+sudo bash -c "echo recomputer > ./eeprom"
+
+# 查看 eeprom 信息
+sudo cat ./eeprom | hexdump -C
+
+# 打开写保护
+sudo bash -c "echo 1 > ./3-00505/force_ro"
+
+# 关闭写保护
+sudo bash -c "echo 0 > ./3-00505/force_ro"
+```
+
+## IMU
+
+```bash
+# 拉取仓库
+git clone https://github.com/laughingrice/ICM20948.git --depth=1
+
+cd ICM20948/Code/
+
+# 修改仓库配置
+vi ICM20948/defines.py
+
+# 修改 以下参数
+I2C_PORT = 3
+ICM20948_I2C_ADDRESS = 0x68
+
+# 运行(需要在 Code 目录下执行)
+python -m ICM20948 --i2c
+```
+
+## ADC
+
+```bash
+# 安装依赖
+pip install smbus-cffi --break-system-packages
+
+# 拷贝 test_adc.py 到设备里面，然后执行
+sudo ./test_adc.py
+
+# 读数大概为 1024 左右
+```
+
+## RTC
+
+查看 rtc 的节点
+
+```bash
+ls /sys/class/rtc
+```
+
+关闭时间同步服务
+
+```bash
+sudo systemctl stop systemd-timesyncd.service
+sudo systemctl disable systemd-timesyncd.service
+```
+
+设置 RTC 时间
+
+```bash
+sudo hwclock --set --date "2025-11-24 12:00:00" -f /dev/rtc1
+```
+
+查看 RTC 时间
+```bash
+sudo hwclock -r -f /dev/rtc1
+```
+
+## 看门狗
+
+安装 开门狗
+```bash
+sudo apt install watchdog
+```
+
+修改看门狗配置
+```bash
+sudo vim /etc/watchdog.conf
+```
+文件内容：
+```bash
+watchdog-device = /dev/watchdog
+
+# Set the hardware timeout (default is 1 minute)
+watchdog-timeout = 120
+
+# Set the interval between tests (should be shorter than watchdog-timeout)
+interval = 15
+
+# Set system load limits
+max-load-1 = 24
+# max-load-5 = 18
+# max-load-15 = 12
+
+# Enable real-time priority
+realtime = yes
+priority = 1
+```
+
+启动开门狗服务
+```bash
+sudo systemctl start watchdog
+```
+
+测试 - 模拟系统崩溃情况
+```bash
+sudo sh -c "echo 1 > /proc/sys/kernel/sysrq"
+sudo sh -c "echo 'c' > /proc/sysrq-trigger"
+```
+
+成功触发之后，系统会在一定时间无响应后自动重启。
+
+注：修改配置文件之后需要重启服务才能正常使用
+
 ## Buzzer
 
 Debian 13

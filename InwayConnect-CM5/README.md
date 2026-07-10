@@ -115,6 +115,8 @@ sudo bash -c "echo 0 > ./3-00505/force_ro"
 
 ## IMU
 
+方法一（不支持中断测试）
+
 ```bash
 # 拉取仓库
 git clone https://github.com/laughingrice/ICM20948.git --depth=1
@@ -130,6 +132,19 @@ ICM20948_I2C_ADDRESS = 0x68
 
 # 运行(需要在 Code 目录下执行)
 python -m ICM20948 --i2c
+```
+
+方法二
+
+```bash
+# 拷贝当前仓库下的 ICM20948 文件夹到设备里面，然后执行
+# 注：需要拷贝整个文件夹，相关配置已修改，可以直接运行
+python -m ICM20948 --i2c
+
+# 获取中断引脚状态 - Debian 12
+gpioget gpiochip0 0
+
+# 目前的程序是 1s 切换一次中断引脚状态
 ```
 
 ## ADC

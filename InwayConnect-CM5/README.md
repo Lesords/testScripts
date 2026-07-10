@@ -33,6 +33,47 @@ sudo bash -c "echo 0 > /sys/class/leds/led_usr2/brightness"
 sudo bash -c "echo 0 > /sys/class/leds/led_usr3/brightness"
 ```
 
+## DI
+
+引脚编号
+
+```bash
+gpio573 - GPIO4 - CM4_IN1 - EXT_IN1
+gpio574 - GPIO5 - CM4_IN2 - EXT_IN2
+```
+
+测试步骤
+
+```bash
+# EXT_IN1, EXT_IN2 步骤类似
+cd /sys/class/gpio
+echo 573 > export
+echo in > gpio573/direction
+cat gpio573/value
+```
+
+注：引脚默认值为1，外部有电压会变为 0
+
+## DO
+
+引脚编号
+
+```bash
+gpio595 - GPIO26 - CM4_OUT - EXT_OUT
+```
+
+测试步骤
+
+```bash
+cd /sys/class/gpio
+echo 595 > export
+echo out > gpio595/direction
+echo 1 > gpio595/value
+# 拉高导通
+```
+
+注：无法输出高电平，只能测试导通
+
 ## eeprom
 
 ```bash

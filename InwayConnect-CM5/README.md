@@ -304,6 +304,24 @@ sudo tpm2_getcap properties-fixed
 sudo ./ups_detect.py
 ```
 
+## One Wire
+
+```bash
+# 查看设备
+ls /sys/bus/w1/devices/
+# 有 w1_bus_master1 节点表示 One Wire 桥接设备识别成功（DS2482S-100+T&R桥接芯片）
+
+# 获取 One Wire 设备列表（外接设备）
+cd /sys/bus/w1/devices/
+cat ./w1_bus_master1/w1_master_slaves
+# 注：需要使用兼容的 One Wire 设备，才能获取到数据
+
+# 查看 One Wire 设备信息（土壤温湿度传感器 - 黑色双叉 - MT05S-B Rev 4.03）
+cat /sys/bus/w1/devices/28-040008031600/w1_slave
+cat /sys/bus/w1/devices/28-040008031600/temperature
+# 注：目前可以获取到温度信息，但是协议可能不完全兼容，读数看起来不准确
+```
+
 ## 4G module
 
 AT 指令参考

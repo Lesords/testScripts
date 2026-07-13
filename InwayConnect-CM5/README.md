@@ -3,6 +3,7 @@
 ## 目录
 
 - [手动加载驱动步骤](#手动加载驱动步骤)
+- [压力测试](#压力测试)
 - [LED](#led)
 - [DI](#di)
 - [DO](#do)
@@ -33,6 +34,22 @@ sudo ./scripts/reTerminal.sh --device rpi-cm5-inway --keep-kernel
 # 重启设备
 sudo reboot
 ```
+
+## 压力测试
+
+安装依赖
+
+```bash
+sudo apt install stress
+```
+
+拷贝 test_stress.sh 到设备里面，然后执行
+
+```bash
+./test_stress.sh
+```
+
+Ctrl + C 停止测试
 
 ## LED
 

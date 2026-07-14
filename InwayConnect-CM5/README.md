@@ -71,6 +71,40 @@ sudo bash -c "echo 0 > /sys/class/leds/led_usr2/brightness"
 sudo bash -c "echo 0 > /sys/class/leds/led_usr3/brightness"
 ```
 
+ACT 控制方法
+
+```bash
+cd /sys/class/leds/ACT
+
+# 清空触发事件
+sudo bash -c "echo none > ./trigger"
+
+# 打开
+sudo bash -c "echo 0 > ./brightness"
+
+# 关闭
+sudo bash -c "echo 1 > ./brightness"
+
+# 注：由于极性问题，可能会导致亮灭状态与实际相反
+```
+
+PWR 控制方法
+
+```bash
+cd /sys/class/leds/PWR
+
+# 清空触发事件
+sudo bash -c "echo none > ./trigger"
+
+# 打开
+sudo bash -c "echo 1 > ./brightness"
+
+# 关闭
+sudo bash -c "echo 0 > ./brightness"
+
+# 注：由于极性问题，可能会导致亮灭状态与实际相反
+```
+
 ## DI
 
 引脚编号

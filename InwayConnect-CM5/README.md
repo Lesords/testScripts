@@ -314,6 +314,13 @@ gpioset gpiochip14 13=0
 ```
 ## Speaker
 
+查看声卡信息
+
+```bash
+aplay -l
+# seeed2micvoicec 前面的数字就是声卡编号
+```
+
 静音
 
 Debian 13
@@ -339,7 +346,64 @@ gpioset gpiochip14 15=0
 播放测试
 
 ```bash
+# 拷贝 bbno.wav 到设备里面，然后执行
 aplay -D hw:2,0 ./bbno.wav
+```
+
+杂音调试
+
+> 需要使用以下命令来修改声卡参数
+>
+> 需要注意的是：
+> - 声卡加载顺序可能会影响到声卡的编号，建议在修改之前先查看声卡的编号
+> - 目前只能降低杂音，无法完全消除杂音
+
+```bash
+# 初始化状态
+amixer -c 2 sset 'PCM' on
+amixer -c 2 sset 'PCM' 50%
+amixer -c 2 sset 'HP' on
+amixer -c 2 sset 'HP' 66%
+amixer -c 2 sset 'Left HP Mixer DACR1' on
+amixer -c 2 sset 'Left HP Mixer DACR1' 81%
+amixer -c 2 sset 'Left HP Mixer PGAR Bypass' on
+amixer -c 2 sset 'Left HP Mixer PGAR Bypass' 61%
+amixer -c 2 sset 'Right HP Mixer DACL1' on
+amixer -c 2 sset 'Right HP Mixer DACL1' 81%
+amixer -c 2 sset 'Right HP Mixer PGAL Bypass' on
+amixer -c 2 sset 'Right HP Mixer PGAL Bypass' 61%
+
+amixer -c 2 sset 'Left HP Mixer DACL1' off
+amixer -c 2 sset 'Left HPCOM Mixer DACL1' off
+amixer -c 2 sset 'Left Line Mixer DACL1' off
+
+amixer -c 2 sset 'Right HP Mixer DACR1' off
+amixer -c 2 sset 'Right HPCOM Mixer DACR1' off
+amixer -c 2 sset 'Right Line Mixer DACR1' off
+
+# 需要动态切换的状态
+## 播放音频
+amixer -c 2 sset 'Left PGA Mixer Line1L' on
+amixer -c 2 sset 'Left PGA Mixer Line1R' on
+amixer -c 2 sset 'Left PGA Mixer Mic2L' on
+amixer -c 2 sset 'Left PGA Mixer Mic2R' on
+amixer -c 2 sset 'Right PGA Mixer Line1L' on
+amixer -c 2 sset 'Right PGA Mixer Line1R' on
+amixer -c 2 sset 'Right PGA Mixer Mic2L' on
+amixer -c 2 sset 'Right PGA Mixer Mic2R' on
+
+## 未播放音频时
+amixer -c 2 sset 'Left PGA Mixer Line1L' off
+amixer -c 2 sset 'Left PGA Mixer Line1R' off
+amixer -c 2 sset 'Left PGA Mixer Mic2L' off
+amixer -c 2 sset 'Left PGA Mixer Mic2R' off
+amixer -c 2 sset 'Right PGA Mixer Line1L' off
+amixer -c 2 sset 'Right PGA Mixer Line1R' off
+amixer -c 2 sset 'Right PGA Mixer Mic2L' off
+amixer -c 2 sset 'Right PGA Mixer Mic2R' off
+
+## 音量大小调试（非必要）
+amixer -c 2 sset 'PCM' 50%
 ```
 
 ## TPM

@@ -225,10 +225,19 @@ sudo systemctl stop systemd-timesyncd.service
 sudo systemctl disable systemd-timesyncd.service
 ```
 
+依赖安装(Debian 13 only)
+
+```bash
+sudo apt install util-linux-extra
+```
+
 设置 RTC 时间
 
 ```bash
 sudo hwclock --set --date "2025-11-24 12:00:00" -f /dev/rtc1
+
+# 系统时间 同步到 硬件 RTC
+sudo hwclock --systohc -f /dev/rtc1
 ```
 
 查看 RTC 时间
@@ -249,7 +258,7 @@ sudo vim /etc/watchdog.conf
 ```
 文件内容：
 ```bash
-watchdog-device = /dev/watchdog
+watchdog-device = /dev/watchdog1
 
 # Set the hardware timeout (default is 1 minute)
 watchdog-timeout = 120
@@ -267,8 +276,9 @@ realtime = yes
 priority = 1
 ```
 
-启动开门狗服务
+重新启动开门狗服务
 ```bash
+sudo systemctl stop watchdog
 sudo systemctl start watchdog
 ```
 
@@ -384,6 +394,12 @@ AT 指令参考
 查询网络信息：AT+QNWINFO
 
 查询(U)SIM 卡的国际移动用户识别码：AT+CIMI
+```
+
+安装依赖
+
+```bash
+sudo apt install minicom
 ```
 
 测试命令

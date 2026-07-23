@@ -192,3 +192,20 @@ sudo hwclock --set --date "2024-11-24 12:00:00"
 # 查看 RTC 时间
 sudo hwclock -r
 ```
+
+## 音频测试步骤
+
+```bash
+# 安装音频测试工具
+sudo apt update
+sudo apt install mpg123
+
+# 播放音频文件（以 test.mp3 为例）
+mpg123 -a hw:0,0 ./test.mp3
+# 或者
+aplay -D plughw:0,0 ./Canon.wav
+
+# 如果有音频异常的话，可以使用脚本来修复
+# 拷贝 scripts/es8311-fix-audio.sh 文件到设备，然后执行
+./es8311-fix-audio.sh
+```

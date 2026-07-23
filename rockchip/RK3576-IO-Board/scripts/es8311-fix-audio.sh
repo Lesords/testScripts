@@ -5,9 +5,9 @@
 # REG37[7:4] 软斜坡速率，0=瞬时变化（根因：15时音量爬升需4.7分钟）
 amixer cset numid=67 0   > /dev/null 2>&1
 
-# DAC VOLUME = 191 (0dB)
-# REG32 DAC音量，191=0dB
-amixer cset numid=62 191 > /dev/null 2>&1
+# DAC VOLUME = 120 (0dB)
+# REG32 DAC音量，120=0dB
+amixer cset numid=62 120 > /dev/null 2>&1
 
 # DAC RAM CLR = off
 # REG31[3] DAC RAM清零，1=持续清零导致静音

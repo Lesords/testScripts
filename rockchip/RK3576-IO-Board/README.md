@@ -195,6 +195,8 @@ sudo hwclock -r
 
 ## 音频测试步骤
 
+播放音频
+
 ```bash
 # 安装音频测试工具
 sudo apt update
@@ -208,4 +210,14 @@ aplay -D plughw:0,0 ./Canon.wav
 # 如果有音频异常的话，可以使用脚本来修复
 # 拷贝 scripts/es8311-fix-audio.sh 文件到设备，然后执行
 ./es8311-fix-audio.sh
+```
+
+录音
+
+```bash
+# 音频回环测试
+arecord -D hw:0,0 -f cd -t raw | aplay -D hw:0,0 -f cd
+
+# 录音测试（录制 3 秒钟的音频并保存为 rec.wav）
+arecord -D plughw:0,0 -d 3 -f cd -vv rec.wav
 ```

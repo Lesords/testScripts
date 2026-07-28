@@ -221,3 +221,59 @@ arecord -D hw:0,0 -f cd -t raw | aplay -D hw:0,0 -f cd
 # 录音测试（录制 3 秒钟的音频并保存为 rec.wav）
 arecord -D plughw:0,0 -d 3 -f cd -vv rec.wav
 ```
+
+## RK1820 加速卡
+
+环境依赖
+
+- 下载 `rknn3_rk182x_m2_installer_arm64.tgz` 文件并解压, 然后使用 `install.sh` 脚本安装
+- 将 pcie-rkep.ko 内核模块拷贝到开发板的 /lib/modules/ 目录下，然后重启设备
+
+命令参考
+
+```bash
+# 查看内核模块是否加载成功
+lsmod | grep -i pcie
+
+# 查看设备是否识别成功
+lspci | grep -i 182
+
+# 查看加速卡设备信息
+rknn-smi info
+
+# 状态监控
+rknn-smi info -w
+
+# 查看服务状态
+systemctl status rknn3.service
+```
+
+LLM 模型测试
+
+```bash
+rknn3_session_test Qwen2.5-0.5B.rknn Qwen2.5-0.5B.weight Qwen2.5-0.5B.tokenizer.gguf Qwen2.5-0.5B.embed.bin 1024 256 0xff
+
+# 当前目录的文件夹结构如下：
+root@recomputer-rk3576-module:~/qwen# ls
+Qwen2.5-0.5B.embed.bin  Qwen2.5-0.5B.rknn  Qwen2.5-0.5B.tokenizer.gguf  Qwen2.5-0.5B.weight
+root@recomputer-rk3576-module:~/qwen# md5sum ./*
+f4f80996c9cf5596e0d51753b2b1f14e  ./Qwen2.5-0.5B.embed.bin
+ee6a6d0ff5f11d3e7927a51a23d8a77d  ./Qwen2.5-0.5B.rknn
+d73d50daadcab1ef8a2bed50b407739c  ./Qwen2.5-0.5B.tokenizer.gguf
+d46024149781b66c6dc085075eaa52b5  ./Qwen2.5-0.5B.weight
+# 注：文件过大不提供，需自行下载
+```
+
+CNN 模型测试
+
+```bash
+rknn3_model_test mobilenet_v2.rknn mobilenet_v2.weight '' '' 0x01 10kkk
+
+# 当前目录的文件夹结构如下：
+root@recomputer-rk3576-module:~/cnn# ls
+mobilenet_v2.rknn  mobilenet_v2.weight
+root@recomputer-rk3576-module:~/cnn# md5sum ./*
+ea2a2abed2ce1ef9d49e4c159c99c285  ./mobilenet_v2.rknn
+2e117b6a8c08b85cf6ba1016b48014c6  ./mobilenet_v2.weight
+# 注：对应的模型文件可以在 models 目录下找到
+```

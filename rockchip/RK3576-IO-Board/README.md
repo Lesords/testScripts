@@ -171,8 +171,45 @@ bluetoothctl -- disconnect D0:67:94:74:3F:CD
 bluetoothctl devices
 
 # 已连接设备的详细信息
+bluetoothctl info
 bluetoothctl info <MAC>
 bluetoothctl info D0:67:94:74:3F:CD
+```
+
+## 蓝牙音频测试步骤
+
+```bash
+# 安装蓝牙音频依赖
+apt install pipewire-pulse wireplumber
+apt install libspa-0.2-bluetooth
+
+# 禁 PulseAudio(防冲突)
+systemctl --user mask pulseaudio.socket pulseaudio.service
+killall pulseaudio
+
+# 起 PipeWire 栈
+# 如果这三个应用已经在运行,请先杀掉
+nohup pipewire >/tmp/pw.log 2>&1 &
+sleep 1
+nohup wireplumber >/tmp/wp.log 2>&1 &
+sleep 1
+nohup pipewire-pulse >/tmp/pwp.log 2>&1 &
+
+# 配对(只做一次)
+bluetoothctl power on
+bluetoothctl pair D0:67:94:74:3F:CD
+bluetoothctl trust D0:67:94:74:3F:CD
+# 配对过的设备可以直接连接
+bluetoothctl connect D0:67:94:74:3F:CD
+
+# 设系统输出到蓝牙耳机
+pactl set-default-sink bluez_output.D0_67_94_74_3F_CD.1
+# 音量拉满
+pactl set-sink-volume bluez_output.D0_67_94_74_3F_CD.1 100%
+
+# 播放音频
+pw-play ./test.mp3
+paplay ./test.mp3
 ```
 
 ## RTC 设备测试步骤

@@ -60,3 +60,26 @@ systemctl start lightdm
 ```
 cat /sys/class/devfreq/27800000.gpu/load
 ```
+
+## 音频测试步骤
+
+```bash
+# 安装工具
+sudo apt update && sudo apt install mpg123
+
+cd /sys/class/gpio
+# 打开 耳机 控制引脚
+echo 24 > ./export
+echo out > ./gpio24/direction
+echo 1 > ./gpio24/value
+
+# 打开 扬声器 控制引脚
+echo 90 > ./export
+echo out > ./gpio90/direction
+echo 1 > ./gpio90/value
+
+# 播放音频
+mpg123 -a hw:0,0 <mp3-file>
+# 例如
+mpg123 -a hw:0,0 ./test.mp3
+```

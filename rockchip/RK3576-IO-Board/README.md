@@ -10,6 +10,7 @@
 - [GPU 测试步骤](#gpu-测试步骤)
 - [NPU 测试步骤](#npu-测试步骤)
 - [DSI 屏幕](#dsi-屏幕)
+- [WiFi 测试步骤](#WiFi-测试步骤)
 - [蓝牙测试步骤](#蓝牙测试步骤)
 - [蓝牙音频测试步骤](#蓝牙音频测试步骤)
 - [RTC 设备测试步骤](#rtc-设备测试步骤)
@@ -164,6 +165,47 @@ overlays=raspi-7inch-touchscreen
 
 跳线位置：DSI 座子和 40 PIN 之间, 40 PIN 旁边
 跳线方向：DSI 座子 -> 40 PIN, 两个跳线都要
+```
+
+## WiFi 测试步骤
+
+自动连接 WiFi
+
+```bash
+# 拷贝 configs/90-wifi-wlan0.yaml 到设备中的 /etc/netplan/ 目录下
+scp configs/90-wifi-wlan0.yaml root@<IP_ADDRESS>:/etc/net
+
+# 修改配置权限
+chmod 600 /etc/netplan/90-wifi-wlan0.yaml
+
+# 然后重启即可生效
+```
+
+手动连接 WiFi
+
+```bash
+# 获取 WiFi 网络 ID
+id=$(wpa_cli -i wlan0 add_network)
+
+# 设置 WiFi SSID 和密码
+wpa_cli -i wlan0 set_network $id ssid '"CMW-AP"'
+wpa_cli -i wlan0 set_network $id psk '"12345678"'
+
+# 启用并选择网络
+wpa_cli -i wlan0 enable_network $id
+wpa_cli -i wlan0 select_network $id
+```
+
+扫描 WiFi
+
+```bash
+# 开启扫描
+wpa_cli -i wlan0 scan
+
+# 获取扫描结果
+wpa_cli -i wlan0 scan_results | grep -i CMW
+
+# 手动过滤扫描结果
 ```
 
 ## 蓝牙测试步骤

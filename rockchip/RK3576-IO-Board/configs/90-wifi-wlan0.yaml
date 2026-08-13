@@ -1,0 +1,12 @@
+network:
+  version: 2
+  renderer: NetworkManager
+
+  wifis:
+    wlan0:
+      dhcp4: true
+      access-points:
+        "CMW-AP":
+          auth:
+            key-management: "psk"
+            password: "12345678"

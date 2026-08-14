@@ -184,28 +184,45 @@ chmod 600 /etc/netplan/90-wifi-wlan0.yaml
 手动连接 WiFi
 
 ```bash
-# 获取 WiFi 网络 ID
+# 方法一
+## 获取 WiFi 网络 ID
 id=$(wpa_cli -i wlan0 add_network)
 
-# 设置 WiFi SSID 和密码
+## 设置 WiFi SSID 和密码
 wpa_cli -i wlan0 set_network $id ssid '"CMW-AP"'
 wpa_cli -i wlan0 set_network $id psk '"12345678"'
 
-# 启用并选择网络
+## 开发网络，无密钥管理
+wpa_cli set_network 0 key_mgmt NONE
+
+## 启用并选择网络
 wpa_cli -i wlan0 enable_network $id
 wpa_cli -i wlan0 select_network $id
+
+# 方法二
+nmcli device wifi connect "CMW-AP" password "密码" ifname wlan0
+## 开发网络，无密钥管理
+nmcli device wifi connect "CMW-AP" wifi-sec.key-mgmt none
 ```
 
 扫描 WiFi
 
 ```bash
-# 开启扫描
+# 方法一
+## 开启扫描
 wpa_cli -i wlan0 scan
 
-# 获取扫描结果
+## 获取扫描结果
 wpa_cli -i wlan0 scan_results | grep -i CMW
 
-# 手动过滤扫描结果
+## 手动过滤扫描结果
+
+# 方法二
+## 主动重新扫描
+nmcli device wifi rescan ifname wlan0
+
+## 查看扫描结果
+nmcli device wifi list ifname wlan0
 ```
 
 ## 蓝牙测试步骤

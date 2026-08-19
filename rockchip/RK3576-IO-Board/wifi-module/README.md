@@ -1,6 +1,16 @@
 # WiFi 模块测试文档
 
-## 驱动 适配
+## 固件信息
+
+```bash
+# h4 协议的蓝牙固件
+a3e91b3bd74daffb133f5a522391476b  ./wq9201_oem_1_1_0366.bin
+
+# h5 协议的蓝牙固件
+b24c25e96e30b1ade844b9393de77543  ./wq9201_oem_1_1_0366.bin
+```
+
+## 驱动适配
 
 ```bash
 # 拷贝驱动
@@ -10,24 +20,52 @@ scp ./driver/wq_wlan.ko root@10.0.0.154:/lib/modules/6.1.115-vendor-rk35xx
 depmod -a
 
 # 拷贝固件
-scp ./* root@10.0.0.154:/lib/firmware
+scp ./firmwares/wq9201_* root@10.0.0.154:/lib/firmware
 
-# 拷贝工具
-scp ./tools/ioctl_app root@10.0.0.154:/usr/bin
+# 拷贝配置文件
+scp ./configs/wq_wlan_settings.ini root@10.0.0.154:/lib/firmware
 
 # 禁用冲突驱动（否则 wlan 驱动无法加载）
 echo "blacklist btsdio" > /etc/modprobe.d/blacklist-aic8800.conf
 
+# 禁用无用驱动（否则可能会导致蓝牙不稳定）
+cat > /etc/modprobe.d/aic8800-wireless.conf <<'EOF'
+blacklist aic8800_bsp
+blacklist aic8800_fdrv
+blacklist aic8800_btlpm
+blacklist aic8800_bsp_sdio
+EOF
+
 # 替换蓝牙启动协议（否则 hci 节点数据有误）
+## h5 版本的替换方法（只支持扫描，不支持连接！！！）
 sed -i "s/any/3wire/" /usr/bin/aic-bluetooth
+## h4 版本的替换方法（新版本，支持连接）
+sed -i 's|hciattach[^>]*|btattach -B /dev/ttyS4 -N -P h4 -S 1500000 |g' /usr/bin/aic-bluetooth
+
+## h4 版本手动执行的方法
+btattach -B /dev/ttyS4 -N -P h4 -S 1500000 &
 ```
 
 ## 定频测试步骤
 
+环境依赖
 ```bash
-# 默认不加载驱动
+# 拷贝定频固件
+scp ./firmwares/定频/wq9201_* root@10.0.0.154:/lib/firmware
+
+# 拷贝工具
+scp ./tools/ioctl_app root@10.0.0.154:/usr/bin
+
+# 默认不加载驱动（新版驱动支持重新加载，所以可以不需要禁用）
 echo "blacklist wq_wlan" >> /etc/modprobe.d/blacklist.conf
 
+# 拷贝脚本
+scp ./scripts/* root@10.0.0.247:/root
+```
+
+测试命令
+
+```bash
 # 卸载驱动
 rmmod wq_wlan
 insmod /lib/modules/$(uname -r)/wq_wlan.ko \
@@ -112,4 +150,21 @@ tx_mpdu 0 1000 0x1 3 2 0 0 50 16 2
 
 cancel
 # 停止发包，需要更改ch、power、rate、ant等发包参数时需先停止发包
+```
+
+## FAQ
+
+### 驱动加载失败问题
+
+问题描述
+
+```bash
+ERROR: count not insert module /lib/modules/6.1.115-vendor-rk35xx/wq_wlan.ko: Invalid parameters
+```
+
+解决方法
+
+```bash
+cd /lib/modules/6.1.115-vendor-rk35xx/
+objcopy --remove-section=.BTF wq_wlan.ko
 ```

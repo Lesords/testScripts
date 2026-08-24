@@ -74,9 +74,13 @@ echo out > ./gpio24/direction
 echo 1 > ./gpio24/value
 
 # 打开 扬声器 控制引脚
+## 方法一
 echo 90 > ./export
 echo out > ./gpio90/direction
 echo 1 > ./gpio90/value
+
+## 方法二(新固件，设备树占用对应的控制引脚)
+amixer -c 0 cset numid=78 1
 
 # 播放音频
 mpg123 -a hw:0,0 <mp3-file>

@@ -85,10 +85,14 @@ stress_test.sh
 ```bash
 sudo apt-get update
 
-sudo apt install -y libmali-bifrost-g52-g24p0-x11-wayland-gbm glmark2-es2-drm
+# 安装驱动包（若固件中有，可以忽略）
+sudo apt install -y libmali-bifrost-g52-g24p0-x11-wayland-gbm
+# 安装测试工具
+sudo apt install -y glmark2-es2-drm
+sudo apt install -y glmark2-es2
 ```
 
-测试步骤
+测试步骤 - xfce 桌面
 ```bash
 # 1. 先关闭桌面（lightdm 占用 DRM master，不关无法运行 DRM 渲染测试）
 systemctl stop lightdm
@@ -105,6 +109,40 @@ glmark2-es2-drm -b shading --run-forever
 
 # 3. 恢复桌面
 systemctl start lightdm
+
+# 无须显示屏
+glmark2-es2-drm --off-screen --run-forever
+```
+
+测试步骤 - gnome 桌面
+```bash
+# 桌面必须活着（off-screen 也需要它做 EGL 初始化）
+systemctl is-active gdm
+# 期望: active
+pgrep -c gnome-shell
+# 期望: ≥1
+
+# 加速状态确认（30 秒）
+eglinfo -B | grep -A3 "GBM platform"
+# 期望: EGL vendor string: ARM + arm_release_ver: g24p0-...
+# 异常: llvmpipe / Mesa = 软渲染
+
+# 工具包依赖
+glmark2-es2
+
+# 测试命令
+WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/121 glmark2-es2-wayland --off-screen
+
+# 单次高负载命令
+WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/121 glmark2-es2-wayland --off-screen -b terrain
+
+# 长时间高负载命令
+WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/121 glmark2-es2-wayland --off-screen \
+  -b terrain:duration=60 -b refract:duration=60 -b shadow:duration=60 \
+  -b 'effect2d:kernel=1,1,1,1,1;1,1,1,1,1;1,1,1,1,1;:duration=60'
+
+# 无限循环单个高负载场景
+WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/121 glmark2-es2-wayland --off-screen --run-forever -b terrain:duration=60
 ```
 
 查看 GPU 负载

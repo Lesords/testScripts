@@ -5,7 +5,18 @@ if [[ "$(lsmod | grep -i wq_wlan)" ]]; then
   rmmod wq_wlan
 fi
 
-insmod /lib/modules/$(uname -r)/wq_wlan.ko \
+if [ -f /lib/modules/$(uname -r)/wq_wlan.ko ]; then
+  ko_file=/lib/modules/$(uname -r)/wq_wlan.ko
+elif [ -f /lib/modules/$(uname -r)/updates/dkms/wq_wlan.ko ]; then
+  ko_file=/lib/modules/$(uname -r)/updates/dkms/wq_wlan.ko
+else
+  echo "wq_wlan module is not found"
+  return 1
+fi
+
+echo "Loading ${ko_file} module..."
+
+insmod ${ko_file} \
   fw_dtop_sdio=wq9201_fw_dtop_1_1_mp_sdio.bin \
   fw_bt=wq9201_fw_bt_1_1_mp.bin \
   fw_wifi_sdio=wq9201_fw_wifi_1_1_dtest.bin \

@@ -154,8 +154,8 @@ DSI 屏幕型号
 # 编辑配置文件
 vim /boot/armbianEnv.txt
 
-# 修改 overlay 为以下内容
-overlay_prefix=recomputer-rk3576-devkit
+# 修改 overlay 为以下内容(V2 版本后的新固件)
+overlay_prefix=recomputer-rk3576-ioboard
 overlays=raspi-7inch-touchscreen
 ```
 

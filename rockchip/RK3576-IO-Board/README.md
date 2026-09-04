@@ -19,6 +19,8 @@
 - [40pin 引脚功能测试](#40pin-引脚功能测试)
   - [CAN 引脚测试](#CAN-引脚测试)
   - [PWM 引脚测试](#PWM-引脚测试)
+  - [I2C 引脚测试](#I2C-引脚测试)
+  - [UART 引脚测试](#UART-引脚测试)
 
 ## EMMC 刷入步骤
 
@@ -563,4 +565,65 @@ pwm40 list              # 全通道总览: 引脚/通道/pwmchip/duty/频率/状
 pwm40 32 50             # 引脚 32 输出 50% @ 1kHz(默认频率)
 pwm40 12 80 20000       # 引脚 12 输出 80% @ 20kHz
 pwm40 32 off            # 停止并释放该通道
+```
+
+### I2C 引脚测试
+
+引脚编号信息(按引脚编号排序;`i2c-N` 编号动态分配,测试时按寄存器地址定位)
+
+| 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
+| -------- | ---- | ------- | -------- | ---- |
+| 3        | I2C3_SDA_M1 | 40pin-i2c3 | 2ac60000 | |
+| 5        | I2C3_SCL_M1 | 40pin-i2c3 | 2ac60000 | |
+| 22       | I2C7_SDA_M1 | 40pin-i2c7 | 2aca0000 | 同上 |
+| 7        | I2C7_SCL_M1 | 40pin-i2c7 | 2aca0000 | 与 SPI3/SAI3/UART3 互斥 |
+| 27       | I2C6_SDA_M3 | 无需 overlay | 2ac90000 | 摄像头控制总线,默认已启用 |
+| 28       | I2C6_SCL_M3 | 无需 overlay | 2ac90000 | 同上 |
+| 31       | I2C8_SDA_M2 | 40pin-i2c8 | 2acb0000 | 同上 |
+| 29       | I2C8_SCL_M2 | 40pin-i2c8 | 2acb0000 | 与 40pin-uart7 互斥 |
+| 40       | I2C4_SDA_M1 | 40pin-i2c4 | 2ac70000 | 同上 |
+| 38       | I2C4_SCL_M1 | 40pin-i2c4 | 2ac70000 | 与 CAN0/UART6 互斥 |
+
+```bash
+overlay_prefix=recomputer-rk3576-module-io-board
+overlays=40pin-i2c3 40pin-i2c4 40pin-i2c7 40pin-i2c8
+```
+
+测试步骤
+```bash
+i2cdetect -y -r N
+```
+
+### UART 引脚测试
+
+引脚编号信息(按引脚编号排序;`ttySN` 编号动态分配,测试时按寄存器地址定位)
+
+| 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
+| -------- | ---- | ------- | -------- | ---- |
+| 7        | UART3_TX_M0 | 40pin-uart3 | 2ad60000 | 与 SPI3/SAI3/I2C7 互斥 |
+| 22       | UART3_RX_M0 | 40pin-uart3 | 2ad60000 | 与 SPI3/SAI3/I2C7 互斥 |
+| 8        | UART0_TX_M0 | 无需 overlay | 2ad40000 | 调试串口,默认启用 |
+| 10       | UART0_RX_M0 | 无需 overlay | 2ad40000 | 同上 |
+| 11       | UART2_RX_M1 | 40pin-uart2 | 2ad50000 | 与 CAN1 互斥 |
+| 13       | UART2_TX_M1 | 40pin-uart2 | 2ad50000 | 同上 |
+| 23       | UART11_RX_M1 | 40pin-uart11 | 2afd0000 | 与 SPI1/PWM1 互斥 |
+| 24       | UART11_TX_M1 | 40pin-uart11 | 2afd0000 | 同上 |
+| 26       | UART9_TX_M0 | 40pin-uart9 | 2adc0000 | TX/RX 跨脚分布 |
+| 32       | UART9_RX_M0 | 40pin-uart9 | 2adc0000 | 与 PWM1_CH0 互斥 |
+| 29       | UART7_TX_M0 | 40pin-uart7 | 2ada0000 | 与 I2C8 互斥 |
+| 31       | UART7_RX_M0 | 40pin-uart7 | 2ada0000 | 同上 |
+| 38       | UART6_TX_M0 | 40pin-uart6 | 2ad90000 | 与 CAN0/I2C4 互斥 |
+| 40       | UART6_RX_M0 | 40pin-uart6 | 2ad90000 | 同上 |
+
+```bash
+overlay_prefix=recomputer-rk3576-module-io-board
+overlays=40pin-uart2 40pin-uart3 40pin-uart6 40pin-uart7 40pin-uart9 40pin-uart11
+```
+
+测试步骤
+```bash
+# 回环测试: 短接 TX/RX 两脚后自发自收(把 N 换成对应的串口编号)
+stty -F /dev/ttySN 115200 raw -echo
+cat /dev/ttySN &
+echo "uart test" > /dev/ttySN
 ```

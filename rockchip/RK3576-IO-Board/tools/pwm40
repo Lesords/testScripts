@@ -1,0 +1,83 @@
+#!/bin/bash
+# pwm40 - reComputer RK3576 Module Dev Kit (154) 40pin PWM 助手
+# 布局依据: "reComputer RK3576 Moudle & IO Board PRD - 40PIN功能配置.csv" (树莓派物理编号)
+# 用法:
+#   pwm40 list              # 列出全部可测通道及当前状态
+#   pwm40 <脚> <duty%>      # 输出 PWM,占空比 0-100,默认 1kHz
+#   pwm40 <脚> <duty%> <Hz> # 指定频率
+#   pwm40 <脚> off          # 停止并释放
+# 示例:
+#   pwm40 32 50       # Pin32 (PWM1_CH0) 50% @ 1kHz
+#   pwm40 12 80 20000 # Pin12 (PWM2_CH6) 80% @ 20kHz
+#   pwm40 32 off
+
+declare -A PIN2ADDR=(
+    [33]=27330000   # PWM0_CH0
+    [32]=2add0000   # PWM1_CH0
+    [26]=2add1000   # PWM1_CH1
+    [19]=2add2000   # PWM1_CH2
+    [24]=2add3000   # PWM1_CH3
+    [23]=2add4000   # PWM1_CH4
+    [16]=2ade0000   # PWM2_CH0
+    [18]=2ade1000   # PWM2_CH1
+    [28]=2ade2000   # PWM2_CH2  (ID_SC)
+    [27]=2ade3000   # PWM2_CH3  (ID_SD)
+    [12]=2ade6000   # PWM2_CH6
+)
+# 注意: 风扇 PWM2_CH7 (2ade7000) 故意不在表内,防误动
+
+chip_of_pin() {  # 脚号 -> pwmchip 路径(按地址反查,不怕编号漂移)
+    local addr=${PIN2ADDR[$1]} c
+    [ -z "$addr" ] && { echo "无此脚号 '$1'(可用: $(echo "${!PIN2ADDR[@]}" | tr ' ' '\n' | sort -n | tr '\n' ' '))" >&2; return 1; }
+    for c in /sys/class/pwm/pwmchip*; do
+        [ "$(basename "$(readlink -f "$c/device")")" = "$addr.pwm" ] && { echo "$c"; return 0; }
+    done
+    echo "未找到 $addr.pwm 对应 pwmchip(overlay 没加载?)" >&2; return 1
+}
+
+case "$2" in
+off)  # pwm40 <脚> off —— 先于数字分支拦截
+    c=$(chip_of_pin "$1") || exit 1
+    echo 0 > "$c/pwm0/enable" 2>/dev/null
+    echo 0 > "$c/unexport" 2>/dev/null
+    echo "Pin$1 已停止并释放"
+    exit 0 ;;
+esac
+
+case "$1" in
+list)
+    printf "%-6s %-10s %-11s %-10s %-10s %s\n" PIN CH PWMCHIP DUTY FREQ STATE
+    for pin in $(echo "${!PIN2ADDR[@]}" | tr ' ' '\n' | sort -n); do
+        c=$(chip_of_pin "$pin") || continue
+        addr=${PIN2ADDR[$pin]}
+        case "$addr" in
+            27330000) ch=PWM0_CH0;; 2add0000) ch=PWM1_CH0;; 2add1000) ch=PWM1_CH1;;
+            2add2000) ch=PWM1_CH2;;  2add3000) ch=PWM1_CH3;;  2add4000) ch=PWM1_CH4;;
+            2ade0000) ch=PWM2_CH0;;  2ade1000) ch=PWM2_CH1;;  2ade2000) ch=PWM2_CH2;;
+            2ade3000) ch=PWM2_CH3;;  2ade6000) ch=PWM2_CH6;;
+        esac
+        if [ -d "$c/pwm0" ]; then
+            p=$(cat "$c/pwm0/period"); d=$(cat "$c/pwm0/duty_cycle"); e=$(cat "$c/pwm0/enable")
+            printf "%-6s %-10s %-11s %-10s %-10s %s\n" "$pin" "$ch" "$(basename "$c")" \
+                "$((d*100/p))%" "$((1000000000/p))Hz" "$([ "$e" = 1 ] && echo ON || echo off)"
+        else
+            printf "%-6s %-10s %-11s %-10s %-10s %s\n" "$pin" "$ch" "$(basename "$c")" - - idle
+        fi
+    done ;;
+[0-9]*)
+    duty=$2; freq=${3:-1000}
+    case "$duty" in ''|*[!0-9]*|[0-9]*[!0-9]*) echo "duty 需为 0-100 整数"; exit 1;; esac
+    [ "$duty" -gt 100 ] && { echo "duty 需为 0-100"; exit 1; }
+    c=$(chip_of_pin "$1") || exit 1
+    period=$((1000000000 / freq))
+    d_ns=$((period * duty / 100))
+    echo 0 > "$c/export" 2>/dev/null          # 已 export 则忽略报错
+    echo 0 > "$c/pwm0/enable" 2>/dev/null
+    echo "$period" > "$c/pwm0/period"
+    echo "$d_ns"   > "$c/pwm0/duty_cycle"
+    echo normal    > "$c/pwm0/polarity"
+    echo 1 > "$c/pwm0/enable"
+    echo "Pin$1 -> ${duty}% @ ${freq}Hz (period=${period}ns duty=${d_ns}ns)" ;;
+*)
+    sed -n '2,13p' "$0" | sed 's/^# \{0,2\}//' ;;
+esac

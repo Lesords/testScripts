@@ -16,6 +16,9 @@
 - [RTC 设备测试步骤](#rtc-设备测试步骤)
 - [音频测试步骤](#音频测试步骤)
 - [RK1820 加速卡](#rk1820-加速卡)
+- [40pin 引脚功能测试](#40pin-引脚功能测试)
+  - [CAN 引脚测试](#CAN-引脚测试)
+  - [PWM 引脚测试](#PWM-引脚测试)
 
 ## EMMC 刷入步骤
 
@@ -440,4 +443,124 @@ root@recomputer-rk3576-module:~/cnn# md5sum ./*
 ea2a2abed2ce1ef9d49e4c159c99c285  ./mobilenet_v2.rknn
 2e117b6a8c08b85cf6ba1016b48014c6  ./mobilenet_v2.weight
 # 注：对应的模型文件可以在 models 目录下找到
+```
+
+## 40pin 引脚功能测试
+
+### CAN 引脚测试
+
+CAN0 引脚编号信息
+
+| 引脚编号 | 功能 | 说明 |
+| -------- | ---- | ---- |
+| 38       | CAN0_TX_M2 | CAN 输出 |
+| 40       | CAN0_RX_M2 | CAN 输入 |
+
+CAN1 引脚编号信息
+
+| 引脚编号 | 功能 | 说明 |
+| -------- | ---- | ---- |
+| 13       | CAN1_TX_M2 | CAN 输出 |
+| 11       | CAN1_RX_M2 | CAN 输入 |
+
+```bash
+overlay_prefix=recomputer-rk3576-module-io-board
+overlays=40pin-can0 40pin-can1
+```
+
+测试命令
+```bash
+# 安装工具
+sudo apt install can-utils
+
+# 启动 can
+## 方法一
+sudo ip link set can0 type can bitrate 500000 dbitrate 2000000 fd on
+sudo ip link set can0 up
+## 方法二（本机用，rk 开发版不支持）
+sudo ip link set can0 up type can bitrate 500000
+sudo ip link set can1 up type can bitrate 500000
+
+# 测试收发
+candump can1
+cansend can0 141#9C.00.00.00.00.00.00.00
+```
+
+```bash
+# 回环测试
+ip link set can1 type can bitrate 500000 dbitrate 2000000 fd on loopback on
+ip link set can1 up
+
+# 自发自收
+candump can1 -n 1 &
+cansend can1 141#9C.00.00.00.00.00.00.11
+```
+
+注意：
+- rk3576 上的 can 需要外置的 CAN 收发器才能正常使用
+- 回环测试无需外置收发器，但只能测试本机收发，无法与其他设备通信
+
+### PWM 引脚测试
+
+引脚编号信息(按 PWM 编号排序)
+
+| 引脚编号 | 功能 |
+| -------- | ---- |
+| 33       | PWM0_CH0_M0 |
+| 32       | PWM1_CH0_M2 |
+| 26       | PWM1_CH1_M2 |
+| 19       | PWM1_CH2_M2 |
+| 24       | PWM1_CH3_M2 |
+| 23       | PWM1_CH4_M2 |
+| 16       | PWM2_CH0_M2 |
+| 18       | PWM2_CH1_M2 |
+| 28       | PWM2_CH2_M1 |
+| 27       | PWM2_CH3_M1 |
+| 12       | PWM2_CH6_M2 |
+
+引脚编号信息(按引脚编号排序;每个通道是独立设备,`pwmchip` 编号动态分配,测试时按寄存器地址定位)
+
+| 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
+| -------- | ---- | ------- | -------- | ---- |
+| 12       | PWM2_CH6_M2 | 40pin-pwm2-ch6 | 2ade6000 | |
+| 16       | PWM2_CH0_M2 | 40pin-pwm2-ch0 | 2ade0000 | |
+| 18       | PWM2_CH1_M2 | 40pin-pwm2-ch1 | 2ade1000 | |
+| 19       | PWM1_CH2_M2 | 40pin-pwm1-ch2 | 2add2000 | 与 SPI1_MOSI 互斥 |
+| 23       | PWM1_CH4_M2 | 40pin-pwm1-ch4 | 2add4000 | 与 SPI1_SCLK 互斥 |
+| 24       | PWM1_CH3_M2 | 40pin-pwm1-ch3 | 2add3000 | 与 SPI1_CSN0 互斥 |
+| 26       | PWM1_CH1_M2 | 40pin-pwm1-ch1 | 2add1000 | 与 SPI1_CSN1 互斥 |
+| 27       | PWM2_CH3_M1 | 40pin-pwm2-ch3 | 2ade3000 | 加载后 i2c6 被关闭 |
+| 28       | PWM2_CH2_M1 | 40pin-pwm2-ch2 | 2ade2000 | 加载后 i2c6 被关闭 |
+| 32       | PWM1_CH0_M2 | 40pin-pwm1-ch0 | 2add0000 | |
+| 33       | PWM0_CH0_M0 | 40pin-pwm0-ch0 | 27330000 | |
+
+```bash
+overlay_prefix=recomputer-rk3576-module-io-board
+overlays=40pin-pwm0-ch0 40pin-pwm1-ch0 40pin-pwm1-ch1 40pin-pwm1-ch2 40pin-pwm1-ch3 40pin-pwm1-ch4 40pin-pwm2-ch0 40pin-pwm2-ch1 40pin-pwm2-ch2 40pin-pwm2-ch3 40pin-pwm2-ch6
+```
+
+测试步骤
+```bash
+P=/sys/class/pwm/pwmchipX
+echo 0        > $P/export
+echo 1000000  > $P/pwm0/period      # 单位 ns:1ms = 1kHz
+echo  500000  > $P/pwm0/duty_cycle  # 50%(必须先 period 后 duty)
+echo 1        > $P/pwm0/enable
+```
+
+#### PWM 测试工具 pwm40
+
+`tools/pwm40` 按物理引脚编号操作，自动按设备地址定位 pwmchip(不受编号漂移影响)。
+
+部署
+```bash
+scp tools/pwm40 root@<IP_ADDRESS>:/usr/local/bin/
+```
+
+使用方法
+```bash
+pwm40 list              # 全通道总览: 引脚/通道/pwmchip/duty/频率/状态
+pwm40 32 50             # 引脚 32 输出 50% @ 1kHz(默认频率)
+pwm40 12 80 20000       # 引脚 12 输出 80% @ 20kHz
+pwm40 32 off            # 停止并释放该通道
 ```

@@ -22,6 +22,7 @@
   - [I2C 引脚测试](#I2C-引脚测试)
   - [UART 引脚测试](#UART-引脚测试)
   - [SPI 引脚测试](#SPI-引脚测试)
+  - [I2S(SAI)引脚测试](#i2ssai引脚测试)
 
 ## EMMC 刷入步骤
 
@@ -667,3 +668,22 @@ lsm6dsx_spi_test /dev/spidev1.0
 ```
 
 注意事项：使用的传感器为 LSM6DS3, 传感器的 SAO 引脚接开发板的 MISO 引脚，传感器的 SDA 接开发板的 MOSI 引脚
+
+### I2S(SAI)引脚测试
+
+SAI3(M2)—— 40pin 上有 overlay 支持的 I2S
+
+| 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
+| -------- | ---- | ------- | -------- | ---- |
+| 12       | SAI3_MCLK_M2 | 40pin-sai3 | 2a630000 | 与 PWM2_CH6 互斥 |
+| 7        | SAI3_SCLK_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/I2C7 互斥 |
+| 22       | SAI3_LRCK_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/I2C7 互斥 |
+| 15       | SAI3_SDO_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/CAN1_M3 互斥 |
+| 36       | SAI3_SDI_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/CAN1_M3 互斥 |
+
+```bash
+# 查看 SAI3 引脚状态
+cat /sys/kernel/debug/pinctrl/pinctrl-rockchip-pinctrl/pinmux-pins | grep sai3
+```
+
+完整声卡测试(接线 / ko 与 dtbo 编译 / 验证)见 [i2s-module/README.md](i2s-module/README.md)。

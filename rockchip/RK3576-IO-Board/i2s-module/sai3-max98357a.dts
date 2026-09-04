@@ -1,0 +1,45 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	fragment@0 {
+		target = <&sai3>;
+		__overlay__ {
+			status = "okay";
+			rockchip,sai-rx-route = <0 1 2 3>;
+			rockchip,sai-tx-route = <0 1 2 3>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&sai3m2_mclk &sai3m2_sclk &sai3m2_lrck
+				     &sai3m2_sdo &sai3m2_sdi>;
+		};
+	};
+
+	fragment@1 {
+		target-path = "/";
+		__overlay__ {
+			max98357a: max98357a {
+				compatible = "maxim,max98357a";
+				#sound-dai-cells = <0>;
+				status = "okay";
+			};
+		};
+	};
+
+	fragment@2 {
+		target-path = "/";
+		__overlay__ {
+			sai3_sound {
+				compatible = "simple-audio-card";
+				simple-audio-card,name = "40pin-SAI3";
+				simple-audio-card,format = "i2s";
+				simple-audio-card,mclk-fs = <256>;
+				simple-audio-card,cpu {
+					sound-dai = <&sai3>;
+				};
+				simple-audio-card,codec {
+					sound-dai = <&max98357a>;
+				};
+			};
+		};
+	};
+};

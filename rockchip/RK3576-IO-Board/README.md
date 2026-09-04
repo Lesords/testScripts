@@ -21,6 +21,7 @@
   - [PWM 引脚测试](#PWM-引脚测试)
   - [I2C 引脚测试](#I2C-引脚测试)
   - [UART 引脚测试](#UART-引脚测试)
+  - [SPI 引脚测试](#SPI-引脚测试)
 
 ## EMMC 刷入步骤
 
@@ -627,3 +628,42 @@ stty -F /dev/ttySN 115200 raw -echo
 cat /dev/ttySN &
 echo "uart test" > /dev/ttySN
 ```
+
+### SPI 引脚测试
+
+SPI1(M1)
+
+| 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
+| -------- | ---- | ------- | -------- | ---- |
+| 19       | SPI1_MOSI_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH2/UART11/SAI2 互斥 |
+| 21       | SPI1_MISO_M1 | 40pin-spi1 | 2ad00000 | 与 PWM0_CH0_M2/UART11/SAI2 互斥 |
+| 23       | SPI1_CLK_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH4/UART11/SAI2 互斥 |
+| 24       | SPI1_CSN0_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH3/UART11/SAI2 互斥 |
+| 26       | UART-引脚测试SPI1_CSN1_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH1/UART9/SAI2 互斥 |
+
+SPI3(M0)
+
+| 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
+| -------- | ---- | ------- | -------- | ---- |
+| 7        | SPI3_CLK_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/I2C7 互斥 |
+| 15       | SPI3_MISO_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/CAN1_M3 互斥 |
+| 22       | SPI3_MOSI_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/I2C7 互斥 |
+| 36       | SPI3_CSN0_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/CAN1_M3 互斥 |
+
+```bash
+overlay_prefix=recomputer-rk3576-module-io-board
+overlays=40pin-spi1 40pin-spi3
+```
+
+测试方法
+
+```bash
+# 部署工具
+scp tools/lsm6dsx_spi_test root@<IP_ADDRESS>:/usr/local/bin/
+
+# 使用方法
+lsm6dsx_spi_test <spi-node>
+lsm6dsx_spi_test /dev/spidev1.0
+```
+
+注意事项：使用的传感器为 LSM6DS3, 传感器的 SAO 引脚接开发板的 MISO 引脚，传感器的 SDA 接开发板的 MOSI 引脚

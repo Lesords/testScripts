@@ -199,9 +199,9 @@ DSI 屏幕型号
 # 编辑配置文件
 vim /boot/armbianEnv.txt
 
-# 修改 overlay 为以下内容(V2 版本后的新固件)
-overlay_prefix=recomputer-rk3576-ioboard
-overlays=raspi-7inch-touchscreen
+# 修改 overlay 为以下内容(2026-09 overlay 通用化改名后的固件)
+overlay_prefix=rk3576
+overlays=raspi-7inch-touchscreen-i2c6-m3
 ```
 
 注意事项
@@ -451,6 +451,8 @@ ea2a2abed2ce1ef9d49e4c159c99c285  ./mobilenet_v2.rknn
 
 ## 40pin 引脚功能测试
 
+> overlay 命名说明:2026-09 内核 overlay 通用化改名后,`overlay_prefix=rk3576`,overlay 名不带板级前缀(如 `can0-m2`、`uart3-m0`)。旧固件(2026-09 之前)使用 `overlay_prefix=recomputer-rk3576-module-io-board` + `40pin-<name>` 写法。SAI3 为独立编译的自定义 overlay,不随内核改名(见文末 I2S 节)。
+
 ### CAN 引脚测试
 
 CAN0 引脚编号信息
@@ -468,8 +470,8 @@ CAN1 引脚编号信息
 | 11       | CAN1_RX_M2 | CAN 输入 |
 
 ```bash
-overlay_prefix=recomputer-rk3576-module-io-board
-overlays=40pin-can0 40pin-can1
+overlay_prefix=rk3576
+overlays=can0-m2 can1-m2
 ```
 
 测试命令
@@ -526,21 +528,21 @@ cansend can1 141#9C.00.00.00.00.00.00.11
 
 | 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
 | -------- | ---- | ------- | -------- | ---- |
-| 12       | PWM2_CH6_M2 | 40pin-pwm2-ch6 | 2ade6000 | |
-| 16       | PWM2_CH0_M2 | 40pin-pwm2-ch0 | 2ade0000 | |
-| 18       | PWM2_CH1_M2 | 40pin-pwm2-ch1 | 2ade1000 | |
-| 19       | PWM1_CH2_M2 | 40pin-pwm1-ch2 | 2add2000 | 与 SPI1_MOSI 互斥 |
-| 23       | PWM1_CH4_M2 | 40pin-pwm1-ch4 | 2add4000 | 与 SPI1_SCLK 互斥 |
-| 24       | PWM1_CH3_M2 | 40pin-pwm1-ch3 | 2add3000 | 与 SPI1_CSN0 互斥 |
-| 26       | PWM1_CH1_M2 | 40pin-pwm1-ch1 | 2add1000 | 与 SPI1_CSN1 互斥 |
-| 27       | PWM2_CH3_M1 | 40pin-pwm2-ch3 | 2ade3000 | 加载后 i2c6 被关闭 |
-| 28       | PWM2_CH2_M1 | 40pin-pwm2-ch2 | 2ade2000 | 加载后 i2c6 被关闭 |
-| 32       | PWM1_CH0_M2 | 40pin-pwm1-ch0 | 2add0000 | |
-| 33       | PWM0_CH0_M0 | 40pin-pwm0-ch0 | 27330000 | |
+| 12       | PWM2_CH6_M2 | pwm2-ch6-m2 | 2ade6000 | |
+| 16       | PWM2_CH0_M2 | pwm2-ch0-m2 | 2ade0000 | |
+| 18       | PWM2_CH1_M2 | pwm2-ch1-m2 | 2ade1000 | |
+| 19       | PWM1_CH2_M2 | pwm1-ch2-m2 | 2add2000 | 与 SPI1_MOSI 互斥 |
+| 23       | PWM1_CH4_M2 | pwm1-ch4-m2 | 2add4000 | 与 SPI1_SCLK 互斥 |
+| 24       | PWM1_CH3_M2 | pwm1-ch3-m2 | 2add3000 | 与 SPI1_CSN0 互斥 |
+| 26       | PWM1_CH1_M2 | pwm1-ch1-m2 | 2add1000 | 与 SPI1_CSN1 互斥 |
+| 27       | PWM2_CH3_M1 | pwm2-ch3-m1 | 2ade3000 | 加载后 i2c6 被关闭 |
+| 28       | PWM2_CH2_M1 | pwm2-ch2-m1 | 2ade2000 | 加载后 i2c6 被关闭 |
+| 32       | PWM1_CH0_M2 | pwm1-ch0-m2 | 2add0000 | |
+| 33       | PWM0_CH0_M0 | pwm0-ch0-m0 | 27330000 | |
 
 ```bash
-overlay_prefix=recomputer-rk3576-module-io-board
-overlays=40pin-pwm0-ch0 40pin-pwm1-ch0 40pin-pwm1-ch1 40pin-pwm1-ch2 40pin-pwm1-ch3 40pin-pwm1-ch4 40pin-pwm2-ch0 40pin-pwm2-ch1 40pin-pwm2-ch2 40pin-pwm2-ch3 40pin-pwm2-ch6
+overlay_prefix=rk3576
+overlays=pwm0-ch0-m0 pwm1-ch0-m2 pwm1-ch1-m2 pwm1-ch2-m2 pwm1-ch3-m2 pwm1-ch4-m2 pwm2-ch0-m2 pwm2-ch1-m2 pwm2-ch2-m1 pwm2-ch3-m1 pwm2-ch6-m2
 ```
 
 测试步骤
@@ -575,20 +577,20 @@ pwm40 32 off            # 停止并释放该通道
 
 | 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
 | -------- | ---- | ------- | -------- | ---- |
-| 3        | I2C3_SDA_M1 | 40pin-i2c3 | 2ac60000 | |
-| 5        | I2C3_SCL_M1 | 40pin-i2c3 | 2ac60000 | |
-| 22       | I2C7_SDA_M1 | 40pin-i2c7 | 2aca0000 | 同上 |
-| 7        | I2C7_SCL_M1 | 40pin-i2c7 | 2aca0000 | 与 SPI3/SAI3/UART3 互斥 |
+| 3        | I2C3_SDA_M1 | i2c3-m1 | 2ac60000 | |
+| 5        | I2C3_SCL_M1 | i2c3-m1 | 2ac60000 | |
+| 22       | I2C7_SDA_M1 | i2c7-m1-pullup | 2aca0000 | 同上 |
+| 7        | I2C7_SCL_M1 | i2c7-m1-pullup | 2aca0000 | 与 SPI3/SAI3/UART3 互斥 |
 | 27       | I2C6_SDA_M3 | 无需 overlay | 2ac90000 | 摄像头控制总线,默认已启用 |
 | 28       | I2C6_SCL_M3 | 无需 overlay | 2ac90000 | 同上 |
-| 31       | I2C8_SDA_M2 | 40pin-i2c8 | 2acb0000 | 同上 |
-| 29       | I2C8_SCL_M2 | 40pin-i2c8 | 2acb0000 | 与 40pin-uart7 互斥 |
-| 40       | I2C4_SDA_M1 | 40pin-i2c4 | 2ac70000 | 同上 |
-| 38       | I2C4_SCL_M1 | 40pin-i2c4 | 2ac70000 | 与 CAN0/UART6 互斥 |
+| 31       | I2C8_SDA_M2 | i2c8-m2-pullup | 2acb0000 | 同上 |
+| 29       | I2C8_SCL_M2 | i2c8-m2-pullup | 2acb0000 | 与 uart7-m0 互斥 |
+| 40       | I2C4_SDA_M1 | i2c4-m1-pullup | 2ac70000 | 同上 |
+| 38       | I2C4_SCL_M1 | i2c4-m1-pullup | 2ac70000 | 与 CAN0/UART6 互斥 |
 
 ```bash
-overlay_prefix=recomputer-rk3576-module-io-board
-overlays=40pin-i2c3 40pin-i2c4 40pin-i2c7 40pin-i2c8
+overlay_prefix=rk3576
+overlays=i2c3-m1 i2c4-m1-pullup i2c7-m1-pullup i2c8-m2-pullup
 ```
 
 测试步骤
@@ -602,24 +604,24 @@ i2cdetect -y -r N
 
 | 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
 | -------- | ---- | ------- | -------- | ---- |
-| 7        | UART3_TX_M0 | 40pin-uart3 | 2ad60000 | 与 SPI3/SAI3/I2C7 互斥 |
-| 22       | UART3_RX_M0 | 40pin-uart3 | 2ad60000 | 与 SPI3/SAI3/I2C7 互斥 |
+| 7        | UART3_TX_M0 | uart3-m0 | 2ad60000 | 与 SPI3/SAI3/I2C7 互斥 |
+| 22       | UART3_RX_M0 | uart3-m0 | 2ad60000 | 与 SPI3/SAI3/I2C7 互斥 |
 | 8        | UART0_TX_M0 | 无需 overlay | 2ad40000 | 调试串口,默认启用 |
 | 10       | UART0_RX_M0 | 无需 overlay | 2ad40000 | 同上 |
-| 11       | UART2_RX_M1 | 40pin-uart2 | 2ad50000 | 与 CAN1 互斥 |
-| 13       | UART2_TX_M1 | 40pin-uart2 | 2ad50000 | 同上 |
-| 23       | UART11_RX_M1 | 40pin-uart11 | 2afd0000 | 与 SPI1/PWM1 互斥 |
-| 24       | UART11_TX_M1 | 40pin-uart11 | 2afd0000 | 同上 |
-| 26       | UART9_TX_M0 | 40pin-uart9 | 2adc0000 | TX/RX 跨脚分布 |
-| 32       | UART9_RX_M0 | 40pin-uart9 | 2adc0000 | 与 PWM1_CH0 互斥 |
-| 29       | UART7_TX_M0 | 40pin-uart7 | 2ada0000 | 与 I2C8 互斥 |
-| 31       | UART7_RX_M0 | 40pin-uart7 | 2ada0000 | 同上 |
-| 38       | UART6_TX_M0 | 40pin-uart6 | 2ad90000 | 与 CAN0/I2C4 互斥 |
-| 40       | UART6_RX_M0 | 40pin-uart6 | 2ad90000 | 同上 |
+| 11       | UART2_RX_M1 | uart2-m1 | 2ad50000 | 与 CAN1 互斥 |
+| 13       | UART2_TX_M1 | uart2-m1 | 2ad50000 | 同上 |
+| 23       | UART11_RX_M1 | uart11-m1 | 2afd0000 | 与 SPI1/PWM1 互斥 |
+| 24       | UART11_TX_M1 | uart11-m1 | 2afd0000 | 同上 |
+| 26       | UART9_TX_M0 | uart9-m0 | 2adc0000 | TX/RX 跨脚分布 |
+| 32       | UART9_RX_M0 | uart9-m0 | 2adc0000 | 与 PWM1_CH0 互斥 |
+| 29       | UART7_TX_M0 | uart7-m0 | 2ada0000 | 与 I2C8 互斥 |
+| 31       | UART7_RX_M0 | uart7-m0 | 2ada0000 | 同上 |
+| 38       | UART6_TX_M0 | uart6-m0 | 2ad90000 | 与 CAN0/I2C4 互斥 |
+| 40       | UART6_RX_M0 | uart6-m0 | 2ad90000 | 同上 |
 
 ```bash
-overlay_prefix=recomputer-rk3576-module-io-board
-overlays=40pin-uart2 40pin-uart3 40pin-uart6 40pin-uart7 40pin-uart9 40pin-uart11
+overlay_prefix=rk3576
+overlays=uart2-m1 uart3-m0 uart6-m0 uart7-m0 uart9-m0 uart11-m1
 ```
 
 测试步骤
@@ -636,24 +638,24 @@ SPI1(M1)
 
 | 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
 | -------- | ---- | ------- | -------- | ---- |
-| 19       | SPI1_MOSI_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH2/UART11/SAI2 互斥 |
-| 21       | SPI1_MISO_M1 | 40pin-spi1 | 2ad00000 | 与 PWM0_CH0_M2/UART11/SAI2 互斥 |
-| 23       | SPI1_CLK_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH4/UART11/SAI2 互斥 |
-| 24       | SPI1_CSN0_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH3/UART11/SAI2 互斥 |
-| 26       | UART-引脚测试SPI1_CSN1_M1 | 40pin-spi1 | 2ad00000 | 与 PWM1_CH1/UART9/SAI2 互斥 |
+| 19       | SPI1_MOSI_M1 | spi1-m1-spidev | 2ad00000 | 与 PWM1_CH2/UART11/SAI2 互斥 |
+| 21       | SPI1_MISO_M1 | spi1-m1-spidev | 2ad00000 | 与 PWM0_CH0_M2/UART11/SAI2 互斥 |
+| 23       | SPI1_CLK_M1 | spi1-m1-spidev | 2ad00000 | 与 PWM1_CH4/UART11/SAI2 互斥 |
+| 24       | SPI1_CSN0_M1 | spi1-m1-spidev | 2ad00000 | 与 PWM1_CH3/UART11/SAI2 互斥 |
+| 26       | SPI1_CSN1_M1 | spi1-m1-spidev | 2ad00000 | 与 PWM1_CH1/UART9/SAI2 互斥 |
 
 SPI3(M0)
 
 | 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
 | -------- | ---- | ------- | -------- | ---- |
-| 7        | SPI3_CLK_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/I2C7 互斥 |
-| 15       | SPI3_MISO_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/CAN1_M3 互斥 |
-| 22       | SPI3_MOSI_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/I2C7 互斥 |
-| 36       | SPI3_CSN0_M0 | 40pin-spi3 | 2ad20000 | 与 SAI3/UART3/CAN1_M3 互斥 |
+| 7        | SPI3_CLK_M0 | spi3-m0-spidev | 2ad20000 | 与 SAI3/UART3/I2C7 互斥 |
+| 15       | SPI3_MISO_M0 | spi3-m0-spidev | 2ad20000 | 与 SAI3/UART3/CAN1_M3 互斥 |
+| 22       | SPI3_MOSI_M0 | spi3-m0-spidev | 2ad20000 | 与 SAI3/UART3/I2C7 互斥 |
+| 36       | SPI3_CSN0_M0 | spi3-m0-spidev | 2ad20000 | 与 SAI3/UART3/CAN1_M3 互斥 |
 
 ```bash
-overlay_prefix=recomputer-rk3576-module-io-board
-overlays=40pin-spi1 40pin-spi3
+overlay_prefix=rk3576
+overlays=spi1-m1-spidev spi3-m0-spidev
 ```
 
 测试方法
@@ -671,15 +673,15 @@ lsm6dsx_spi_test /dev/spidev1.0
 
 ### I2S(SAI)引脚测试
 
-SAI3(M2)—— 40pin 上有 overlay 支持的 I2S
+SAI3(M2)—— 40pin 上有 overlay 支持的 I2S(自定义 overlay,独立编译部署,不随内核 overlay 改名;文件名与加载写法见 [i2s-module/README.md](i2s-module/README.md))
 
 | 引脚编号 | 功能 | overlay | 设备地址 | 说明 |
 | -------- | ---- | ------- | -------- | ---- |
-| 12       | SAI3_MCLK_M2 | 40pin-sai3 | 2a630000 | 与 PWM2_CH6 互斥 |
-| 7        | SAI3_SCLK_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/I2C7 互斥 |
-| 22       | SAI3_LRCK_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/I2C7 互斥 |
-| 15       | SAI3_SDO_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/CAN1_M3 互斥 |
-| 36       | SAI3_SDI_M2 | 40pin-sai3 | 2a630000 | 与 SPI3/UART3/CAN1_M3 互斥 |
+| 12       | SAI3_MCLK_M2 | sai3-max98357a | 2a630000 | 与 PWM2_CH6 互斥 |
+| 7        | SAI3_SCLK_M2 | sai3-max98357a | 2a630000 | 与 SPI3/UART3/I2C7 互斥 |
+| 22       | SAI3_LRCK_M2 | sai3-max98357a | 2a630000 | 与 SPI3/UART3/I2C7 互斥 |
+| 15       | SAI3_SDO_M2 | sai3-max98357a | 2a630000 | 与 SPI3/UART3/CAN1_M3 互斥 |
+| 36       | SAI3_SDI_M2 | sai3-max98357a | 2a630000 | 与 SPI3/UART3/CAN1_M3 互斥 |
 
 ```bash
 # 查看 SAI3 引脚状态

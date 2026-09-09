@@ -19,9 +19,9 @@ machine 驱动(simple-audio-card)为内核 builtin(`CONFIG_SND_SIMPLE_CARD=y`),�
 适用于目标板内核版本与产物一致(`uname -r` 为 `6.1.115-vendor-seeed-rk3576`)。
 
 ```bash
-# ① dtbo 上板(文件名必须带 overlay_prefix 前缀,否则 armbianEnv 静默不加载)
+# ① dtbo 上板(文件名带 overlay_prefix 前缀,与内核 overlay 命名一致;bootscript 亦有裸名兜底)
 scp output/sai3-max98357a.dtbo \
-    root@<IP_ADDRESS>:/boot/dtb/rockchip/overlay/recomputer-rk3576-module-io-board-40pin-sai3-max98357a.dtbo
+    root@<IP_ADDRESS>:/boot/dtb/rockchip/overlay/rk3576-sai3-max98357a.dtbo
 
 # ② ko 入模块库并刷新索引
 scp output/snd-soc-max98357a.ko root@<IP_ADDRESS>:/root/
@@ -29,8 +29,8 @@ ssh root@<IP_ADDRESS> "cp /root/snd-soc-max98357a.ko /lib/modules/\$(uname -r)/u
 
 # ③ 启用
 # /boot/armbianEnv.txt:
-overlay_prefix=recomputer-rk3576-module-io-board
-overlays=40pin-sai3-max98357a
+overlay_prefix=rk3576
+overlays=sai3-max98357a
 ```
 
 ## 路线二:手动编译
@@ -41,7 +41,7 @@ overlays=40pin-sai3-max98357a
 
 ```bash
 dtc -q -I dts -O dtb -o sai3-max98357a.dtbo sai3-max98357a.dts
-scp sai3-max98357a.dtbo root@<IP_ADDRESS>:/boot/dtb/rockchip/overlay/recomputer-rk3576-module-io-board-40pin-sai3-max98357a.dtbo
+scp sai3-max98357a.dtbo root@<IP_ADDRESS>:/boot/dtb/rockchip/overlay/rk3576-sai3-max98357a.dtbo
 ```
 
 ### ko(板上本地编译,vermagic/CRC 与内核天然匹配;镜像自带 gcc 和 linux-headers)

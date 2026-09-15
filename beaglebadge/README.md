@@ -17,6 +17,7 @@
   - [IMU INT0 中断引脚](#imu-int0-中断引脚)
 - [外设接口](#外设接口)
   - [引脚编号](#引脚编号)
+  - [DSI 屏幕](#DSI-屏幕)
 - [测试命令汇总](#测试命令汇总)
 
 ## 设备相关
@@ -98,6 +99,20 @@ cd /mnt
 ./sx126x_demo_private rx
 ./sx126x_demo_public tx
 ./sx126x_demo_public rx
+```
+
+定频程序
+
+```bash
+# 工具路径
+tools/sx126x_demo_fixedfreq
+
+# 运行方式
+./sx126x_demo_fixedfreq                                  # 查看帮助
+./sx126x_demo_fixedfreq tx -f 904600000 -p 22            # FCC DTS 信道 2
+./sx126x_demo_fixedfreq tx -f 876100000 -b 125 -p 16     # CE EU868
+./sx126x_demo_fixedfreq cw -f 903000000 -p 22            # 单载波
+./sx126x_demo_fixedfreq rx -f 903000000 -b 500 -n 100    # 收 100 包后退出
 ```
 
 ### EMMC (EVT only)
@@ -330,6 +345,43 @@ GPIO0_0:      519
 注意：
 - `USB1_DRVVBUS` 引脚默认被驱动占用，修改为 IO 模式会导致 USB 口无法使用
 
+### DSI 屏幕
+
+> V2-factory-image-dsi 固件中支持开机自动输出 PASS 到屏幕
+>
+> 并且支持 7inch 和 5inch 两种屏幕，需要手动修改对应的 overlay 配置
+
+修改 overlay 的方法
+```bash
+# 打开对应的配置文件
+vim /boot/uEnv.txt
+
+# 修改以下内容中的 V* 版本号
+# V1 为 5inch DSI LCD 屏幕
+# V2 为 7inch DSI LCD 屏幕
+name_overlays=ti/k3-am62l3-badge-beaglebadge-extras.dtbo ti/k3-am62l3-badge-display-v1.dtbo
+
+# 修改后保存退出，重启设备即可
+```
+
+DSI 屏幕状态检测
+
+```bash
+# 查看连接状态（屏是否物理接入）
+cat /sys/class/drm/card0-DSI-1/status
+
+# 查看管线状态（enabled: 管线是否已建立/已点火; dpms: 电源开没开）
+cat /sys/class/drm/card0-DSI-1/enabled
+cat /sys/class/drm/card0-DSI-1/dpms
+
+# 查看内核 DRM 管线实态（CRTC 是否在扫描输出 + DSI host 是否在工作）
+grep -E "enable=|active=|mode:" /sys/kernel/debug/dri/30200000.dss/state
+cat /sys/devices/platform/bus@f0000/30500000.dsi/power/runtime_status
+
+# 查看屏幕分辨率（800x480=V1 / 720x1280=V2）
+cat /sys/class/graphics/fb0/virtual_size
+```
+
 ## 测试命令汇总
 
 ```bash
@@ -348,10 +400,13 @@ evtest /dev/input/event0
 
 # ADC
 cd /sys/bus/iio/devices/iio\:device2
-# 光照
+## 光照
 cat ./in_voltage2_raw
-# mikrobus
+## mikrobus
 cat ./in_voltage1_raw
+
+## 电量充电 IC
+/sys/bus/iio/devices/iio:device2# cat ./in_voltage0_raw
 
 # buzzer
 cd /sys/class/pwm/pwmchip1/

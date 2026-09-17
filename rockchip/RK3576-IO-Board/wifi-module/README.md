@@ -18,6 +18,20 @@ c12fccf6c377e73801b02b4329d681c0  ./wq9201_oem_1_1_0366.bin
 c1cd675e5eb46025eef89862fa8b0f1d  ./wq9201_oem_1_1_0366.bin
 ```
 
+## 一键部署步骤
+
+```bash
+# 拷贝 package/v2.2.3.94.tar.gz 到目标板 /root 目录下
+
+# 解压
+tar zxvf ./v2.2.3.94.tar.gz
+
+# 进入解压目录
+cd v2.2.3.94/
+# 执行安装脚本
+sudo ./install.sh
+```
+
 ## 驱动适配
 
 ```bash
@@ -175,4 +189,26 @@ ERROR: count not insert module /lib/modules/6.1.115-vendor-rk35xx/wq_wlan.ko: In
 ```bash
 cd /lib/modules/6.1.115-vendor-rk35xx/
 objcopy --remove-section=.BTF wq_wlan.ko
+```
+
+### 蓝牙定频方法
+
+```bash
+需要使用安装相应的厂测上位机软件（只有 windows 版本）
+
+上位机需要配置以下几个路径：
+app: /usr/bin/ioctl_app
+
+ko:  /lib/modules/6.1.115-vendor-rk35xx/wq_wlan.ko
+# 或者
+     /lib/modules/6.1.115-vendor-seeed-rk3576/updates/dkms/wq_wlan.ko
+
+PhyCfg: /lib/firmware/wq9201_phy_1_1_4366_0102.bin
+
+FwDtop: /lib/firmware/wq9201_fw_dtop_1_1_mp_sdio.bin
+FwWiFi: /lib/firmware/wq9201_fw_wifi_1_1_dtest.bin
+FwBt:   /lib/firmware/wq9201_fw_bt_1_1_mp.bin
+
+定频模式需要先在设备中使用 load_ko.sh 脚本加载驱动。
+然后断开串口连接，在上位机软件中选择对应的串口开始初始化即可
 ```

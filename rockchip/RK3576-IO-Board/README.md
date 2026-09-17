@@ -23,6 +23,7 @@
   - [UART 引脚测试](#UART-引脚测试)
   - [SPI 引脚测试](#SPI-引脚测试)
   - [I2S(SAI)引脚测试](#i2ssai引脚测试)
+- [OTA 功能测试](#OTA-功能测试)
 
 ## EMMC 刷入步骤
 
@@ -624,11 +625,25 @@ overlay_prefix=rk3576
 overlays=uart2-m1 uart3-m0 uart6-m0 uart7-m0 uart9-m0 uart11-m1
 ```
 
+串口相关命令
+```bash
+# 设置串口参数(把 N 换成对应的串口编号)
+stty -F /dev/ttySN 115200 raw -echo
+
+# 查看串口状态
+stty -F /dev/ttySN -a
+```
+
 测试步骤
 ```bash
 # 回环测试: 短接 TX/RX 两脚后自发自收(把 N 换成对应的串口编号)
+## 设置串口参数
 stty -F /dev/ttySN 115200 raw -echo
+
+## 获取串口数据
 cat /dev/ttySN &
+
+## 发送测试数据
 echo "uart test" > /dev/ttySN
 ```
 
@@ -689,3 +704,24 @@ cat /sys/kernel/debug/pinctrl/pinctrl-rockchip-pinctrl/pinmux-pins | grep sai3
 ```
 
 完整声卡测试(接线 / ko 与 dtbo 编译 / 验证)见 [i2s-module/README.md](i2s-module/README.md)。
+
+## OTA 功能测试
+
+Recovery 固件
+
+```bash
+# OTA 升级命令
+armbian-ota start <ota-package>
+# 参考命令
+armbian-ota start ./Armbian-unofficial_26.08.0-trunk_Recomputer-rk3576-module-devkit_noble_vendor_6.1.115_gnome_desktop_RECOVERY_OTA.tar.gz
+
+# 查看 OTA 升级状态
+atmbian-ota status
+```
+
+AB 分区固件
+
+```bash
+# 切换分区
+armbian-ota switch-slot [a|b]
+```

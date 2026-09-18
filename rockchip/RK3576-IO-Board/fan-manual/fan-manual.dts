@@ -1,0 +1,44 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * fan-manual: 摘除 CPU 风扇内核温控,交还用户态手动控制(pwm1 写入不再被抢回)
+ *
+ * 做法:禁用原 fan0 节点(不 probe 温控 notifier),新建无 rockchip,temp-trips 的
+ * 同驱动节点(thermal zone maps 引用旧 fan0 phandle,不指向新节点,无人抢 PWM)。
+ *
+ * 注意:生效后风扇完全脱离温控(开机默认全速),过热只剩降频/硬件关机兜底。
+ */
+
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/pinctrl/rockchip.h>
+
+/ {
+	fragment@0 {
+		target = <&fan0>;
+		__overlay__ {
+			status = "disabled";
+		};
+	};
+
+	fragment@1 {
+		target-path = "/";
+		__overlay__ {
+			pwm-fan-manual {
+				compatible = "pwm-fan";
+				cooling-levels = <0 50 100 150 200 255>;
+				fan-supply = <&vcc_sys>;
+				pwms = <&pwm2_8ch_7 0 60000 0>;
+
+				interrupt-parent = <&gpio0>;
+				interrupts = <RK_PD0 IRQ_TYPE_EDGE_BOTH>;
+				pulses-per-revolution = <4>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&fan_tach>;
+
+				status = "okay";
+			};
+		};
+	};
+};

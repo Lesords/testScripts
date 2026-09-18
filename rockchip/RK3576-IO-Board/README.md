@@ -6,6 +6,8 @@
 - [SPI Flash 刷入步骤](#spi-flash-刷入步骤)
 - [设备状态](#设备状态)
   - [查看电源状态](#查看电源状态)
+- [LED 灯](#LED-灯)
+- [风扇](#风扇)
 - [压力测试步骤](#压力测试步骤)
 - [GPU 测试步骤](#gpu-测试步骤)
 - [NPU 测试步骤](#npu-测试步骤)
@@ -67,6 +69,61 @@ upgrade_tool rd
 ```bash
 cat /sys/kernel/debug/pm_genpd/pm_genpd_summary
 ```
+
+## LED 灯
+
+> 注：默认的 led 是心跳灯（绿色），红色的是电源灯，不可控
+
+手动控制步骤
+
+```bash
+cd /sys/class/leds/user-led
+
+# 清空默认触发事件
+echo none > ./trigger
+# Or
+sudo bash -c "echo none > ./trigger"
+
+# 拉高点亮
+echo 1 > ./brightness
+
+# 拉低熄灭
+echo 0 > ./brightness
+```
+
+## 风扇
+
+查看风扇状态
+```bash
+# 查看当前转速
+cat /sys/class/hwmon/hwmon6/fan1_input
+
+# 查看 pwm 值
+cat /sys/class/hwmon/hwmon6/pwm1
+```
+
+手动控制步骤
+
+> ⚠️ 不要用运行时 unbind pwm-fan 的方式 —— 会导致内核 oops 并连热降频一起搞挂,只能重启恢复
+
+```bash
+# 部署 overlay
+scp fan-manual/output/fan-manual.dtbo \
+    root@<IP_ADDRESS>:/boot/dtb/rockchip/overlay/rk3576-fan-manual.dtbo
+ssh root@<IP_ADDRESS> \
+    "sed -i 's/^overlays=\(.*\)/overlays=\1 fan-manual/' /boot/armbianEnv.txt && reboot"
+
+# 重启后手动控制(按名字定位 hwmon)
+H=$(for d in /sys/class/hwmon/hwmon*; do [ "$(cat $d/name 2>/dev/null)" = pwmfan ] && echo $d && break; done)
+
+# 占空比 0~255,实测:100≈4500RPM,200≈8300RPM
+echo 200 > $H/pwm1
+
+# 转速 RPM
+cat $H/fan1_input
+```
+
+注意:overlay 生效后开机默认全速、过热无风扇兜底。回滚:overlays= 行删掉 fan-manual 重启。
 
 ## 压力测试步骤
 

@@ -8,6 +8,7 @@
   - [查看电源状态](#查看电源状态)
 - [LED 灯](#LED-灯)
 - [风扇](#风扇)
+- [eeprom](#eeprom)
 - [压力测试步骤](#压力测试步骤)
 - [GPU 测试步骤](#gpu-测试步骤)
 - [NPU 测试步骤](#npu-测试步骤)
@@ -124,6 +125,20 @@ cat $H/fan1_input
 ```
 
 注意:overlay 生效后开机默认全速、过热无风扇兜底。回滚:overlays= 行删掉 fan-manual 重启。
+
+## eeprom
+
+```bash
+# 查看 eeprom 内容
+cat /sys/bus/i2c/devices/2-0050/eeprom | hexdump -C
+
+# 关闭写保护
+gpioset 0 25=0
+
+# 写入 mac 地址
+printf 'B8:AE:1F:00:00:01' | \
+  dd of=/sys/bus/i2c/devices/2-0050/eeprom bs=1 seek=32 conv=notrunc
+```
 
 ## 压力测试步骤
 

@@ -1,0 +1,15 @@
+/dts-v1/;
+/plugin/;
+
+/*
+ * Configure SDMMC0 as a 1-bit, non-removable bus (on-board SD device
+ * wired with DAT0 only, no card-detect). CLK/CMD/DAT0 pins are shared
+ * with the bus4 group since rk3576 has no bus1 group.
+ */
+
+&sdmmc {
+	pinctrl-0 = <&sdmmc0_clk &sdmmc0_cmd &sdmmc0_bus4>;
+	bus-width = <1>;
+	non-removable;
+	post-power-on-delay-ms = <500>;
+};

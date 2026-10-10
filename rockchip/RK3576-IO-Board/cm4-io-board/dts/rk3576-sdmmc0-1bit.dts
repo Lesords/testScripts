@@ -1,0 +1,15 @@
+/dts-v1/;
+/plugin/;
+
+/*
+ * Configure SDMMC0 as a 1-bit bus with polling card detection
+ * (broken-cd) for sockets without a card-detect pin. CLK/CMD/DAT0
+ * pins are shared with the bus4 group since rk3576 has no bus1
+ * group.
+ */
+
+&sdmmc {
+	pinctrl-0 = <&sdmmc0_clk &sdmmc0_cmd &sdmmc0_bus4>;
+	bus-width = <1>;
+	broken-cd;
+};

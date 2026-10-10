@@ -1,0 +1,21 @@
+/dts-v1/;
+/plugin/;
+
+#include <dt-bindings/pinctrl/rockchip.h>
+#include <dt-bindings/gpio/gpio.h>
+
+/*
+ * Release the reset of the USB hub on the CM4-style IO board by driving
+ * GPIO2_C1 (global line 81, 40-pin PIN_26) high. The hub has no I2C
+ * interface and no driver; a gpio-hog lets the pinctrl driver bring the
+ * line up early during boot, well before xHCI starts probing.
+ */
+
+&gpio2 {
+	usb-hub-reset-hog {
+		gpio-hog;
+		gpios = <RK_PC1 GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "usb-hub-reset";
+	};
+};

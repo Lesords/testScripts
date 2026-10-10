@@ -1,0 +1,21 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	metadata {
+		title = "Set USB DRD0 (Type-C) to host mode";
+		compatible = "rockchip,rk3576";
+		category = "misc";
+		exclusive = "usb_drd0_dwc3-dr_mode";
+		description = "Set the USB DRD0 / Type-C port to permanent host mode.\nUse this when the port should always behave as a USB host.";
+	};
+
+	fragment@0 {
+		target = <&usb_drd0_dwc3>;
+
+		__overlay__ {
+			status = "okay";
+			dr_mode = "host";
+		};
+	};
+};

@@ -14,6 +14,7 @@
 - [NPU 测试步骤](#npu-测试步骤)
 - [CSI 摄像头](#csi-摄像头)
 - [DSI 屏幕](#dsi-屏幕)
+- [三屏测试步骤](#三屏测试步骤)
 - [WiFi 测试步骤](#WiFi-测试步骤)
 - [蓝牙测试步骤](#蓝牙测试步骤)
 - [蓝牙音频测试步骤](#蓝牙音频测试步骤)
@@ -308,6 +309,19 @@ overlays=raspi-7inch-touchscreen-i2c6-m3
 
 跳线位置：DSI 座子和 40 PIN 之间, 40 PIN 旁边
 跳线方向：DSI 座子 -> 40 PIN, 两个跳线都要
+```
+
+## 三屏测试步骤
+
+> DSI + HDMI + DP, 其中 DP 为 4k
+
+配置步骤
+```bash
+# 编辑配置文件
+vim /boot/armbianEnv.txt
+
+# 然后只需要添加一下内容即可（无须修改 overlay_prefix）
+overlays=rk3576-raspi-7inch-touchscreen-i2c6-m3 recomputer-rk3576-devkit-dp-4k
 ```
 
 ## WiFi 测试步骤

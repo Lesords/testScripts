@@ -12,6 +12,7 @@
 - [压力测试步骤](#压力测试步骤)
 - [GPU 测试步骤](#gpu-测试步骤)
 - [NPU 测试步骤](#npu-测试步骤)
+- [CSI 摄像头](#csi-摄像头)
 - [DSI 屏幕](#dsi-屏幕)
 - [WiFi 测试步骤](#WiFi-测试步骤)
 - [蓝牙测试步骤](#蓝牙测试步骤)
@@ -261,6 +262,27 @@ cd rknn_benchmark_Linux
 查看 NPU 负载
 ```bash
 cat /sys/kernel/debug/rknpu/load
+```
+
+## CSI 摄像头
+
+摄像头型号：
+```bash
+Raspberry Pi Camera Module 3
+```
+
+环境依赖
+```bash
+sudo apt install -y gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-base
+```
+
+抓取图片
+```bash
+# cam0 - 左侧 CSI1
+gst-launch-1.0 v4l2src device=/dev/video22 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam0.jpg
+
+# cam1 - 上方 CSI2
+gst-launch-1.0 v4l2src device=/dev/video31 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam1.jpg
 ```
 
 ## DSI 屏幕

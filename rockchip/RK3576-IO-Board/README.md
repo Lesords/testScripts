@@ -134,8 +134,11 @@ cat $H/fan1_input
 # 查看 eeprom 内容
 cat /sys/bus/i2c/devices/2-0050/eeprom | hexdump -C
 
-# 关闭写保护
-gpioset 0 25=0
+# 关闭写保护（libgpiod v2）
+gpioset -c gpiochip0 25=0
+
+# 关闭写保护（libgpiod v1）
+gpioset gpiochip0 25=0
 
 # 写入 board code
 echo -n "rk35xx01A0" > /sys/bus/i2c/devices/2-0050/eeprom
@@ -143,7 +146,20 @@ echo -n "rk35xx01A0" > /sys/bus/i2c/devices/2-0050/eeprom
 # 写入 mac 地址
 printf 'B8:AE:1F:00:00:01' | \
   dd of=/sys/bus/i2c/devices/2-0050/eeprom bs=1 seek=32 conv=notrunc
+
+# 写入非法 mac 地址（用于测试）
+printf 'FF:AE:1F:00:00:01' | \
+  dd of=/sys/bus/i2c/devices/2-0050/eeprom bs=1 seek=32 conv=notrunc
+
+# 清空 mac 地址
+printf '\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff' | \
+  dd of=/sys/bus/i2c/devices/2-0050/eeprom bs=1 seek=32 conv=notrunc
 ```
+
+注意：
+- `gpioset` 分 libgpiod v1 / v2 两个不兼容的大版本，用 `gpioset --version` 判别（1.6.x = v1，v2.x = v2）
+- 差异只在 chip 的给法：v1 是位置参数（`gpioset gpiochip0 25=0`），v2 必须用 `-c` 选项（`gpioset -c gpiochip0 25=0`）；在 v2 上跑 v1 写法会报 `invalid line value: '0'`
+- `gpioget` / `gpioinfo` 同理（v1：`gpioinfo gpiochip0`；v2：`gpioinfo -c gpiochip0`）
 
 ## 压力测试步骤
 

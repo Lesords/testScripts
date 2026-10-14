@@ -29,6 +29,7 @@
   - [SPI 引脚测试](#SPI-引脚测试)
   - [I2S(SAI)引脚测试](#i2ssai引脚测试)
 - [OTA 功能测试](#OTA-功能测试)
+- [AI Lab 模型适配步骤](#ai-lab-模型适配步骤)
 
 ## EMMC 刷入步骤
 
@@ -852,3 +853,52 @@ AB 分区固件
 # 切换分区
 armbian-ota switch-slot [a|b]
 ```
+
+## AI Lab 模型适配步骤
+
+环境配置
+```bash
+# 1. 安装 docker
+apt install docker.io
+
+# 2. docker 配置：data-root 挪出 overlay + docker.io 镜像加速
+mkdir -p /etc/docker
+cat > /etc/docker/daemon.json <<'EOF'
+{
+  "data-root": "/media/root-rw/docker",
+  "registry-mirrors": ["https://docker.nju.edu.cn", "https://docker.m.daocloud.io"]
+}
+EOF
+
+# 3. containerd 配置：镜像层存储挪出 overlay（containerd image store 模式必需）
+mkdir -p /etc/containerd
+cat > /etc/containerd/config.toml <<'EOF'
+root = "/media/root-rw/containerd"
+EOF
+
+# 4. 重启生效
+systemctl restart containerd docker
+```
+
+拉取 image 步骤
+```bash
+docker pull ghcr.io/seeed-projects/recomputer-rk-cv/rk3576-yolov6:latest
+# 镜像源
+docker pull ghcr.nju.edu.cn/seeed-projects/recomputer-rk-cv/rk3576-yolov6:latest
+```
+
+运行步骤
+```bash
+sudo docker run --rm --privileged --net=host --device /dev/dri/renderD128:/dev/dri/renderD128 \
+  -v /proc/device-tree/compatible:/proc/device-tree/compatible:ro \
+  ghcr.io/seeed-projects/recomputer-rk-cv/rk3576-yolov6:latest \
+  python3 web_detection.py --platform rk3576 --model_path model/yolov6n.rknn --video_path video/test.mp4
+
+# 镜像源
+sudo docker run --rm --privileged --net=host --device /dev/dri/renderD128:/dev/dri/renderD128 \
+  -v /proc/device-tree/compatible:/proc/device-tree/compatible:ro \
+  ghcr.nju.edu.cn/seeed-projects/recomputer-rk-cv/rk3576-yolov6:latest \
+  python3 web_detection.py --platform rk3576 --model_path model/yolov6n.rknn --video_path video/test.mp4
+```
+
+然后网页打开对应的 `<IP>:8000` 即可看到检测结果

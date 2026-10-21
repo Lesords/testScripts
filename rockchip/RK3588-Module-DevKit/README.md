@@ -20,6 +20,7 @@
 - [M.2 / mini-PCIe 其它插槽](#m2--mini-pcie-其它插槽)
 - [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
 - [蓝牙测试 (M.2 E-key)](#蓝牙测试-m2-e-key)
+- [LoRa 测试 (WM1302, mini-PCIe)](#lora-测试-wm1302-mini-pcie)
 - [HDMI / DP 显示](#hdmi--dp-显示)
 - [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
 - [NPU 测试](#npu-测试)
@@ -355,6 +356,21 @@ bluetoothctl devices
 bluetoothctl info
 bluetoothctl info <MAC>
 bluetoothctl info D0:67:94:74:3F:CD
+```
+
+## LoRa 测试 (WM1302, mini-PCIe)
+
+```bash
+# 克隆仓库
+git clone https://github.com/Lesords/sx1302_hal.git -b feat/recomputer-industrial-rk3588 --depth=3
+
+# 编译
+cd sx1302_hal
+make
+
+# 运行
+cd packet_forwarder/
+sudo ./lora_pkt_fwd -c global_conf.json.sx1250.US915
 ```
 
 ## HDMI / DP 显示

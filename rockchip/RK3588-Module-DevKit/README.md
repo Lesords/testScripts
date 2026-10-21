@@ -11,6 +11,7 @@
 - [音频测试 (ES8311)](#音频测试-es8311)
 - [风扇](#风扇)
 - [LED 灯](#led-灯)
+- [GPIO 扩展 PCA9535](#gpio-扩展-pca9535)
 - [eeprom](#eeprom)
 - [双 RTC 测试](#双-rtc-测试)
 - [USB 测试](#usb-测试)
@@ -171,6 +172,41 @@ echo none        > /sys/class/leds/led-act/trigger
 echo 255         > /sys/class/leds/led-act/brightness
 # 改回心跳
 echo heartbeat   > /sys/class/leds/led-act/trigger
+```
+
+## GPIO 扩展 PCA9535
+
+I2C0 @0x21,16 路,INT = GPIO1_D5(I2C0_INT)。全部线名(= 功能):
+
+| 线 | 名称 | 功能 | 线 | 名称 | 功能 |
+| ---- | ---- | ---- | ---- | ---- | ---- |
+| P00 | USER_LED_R | 红 LED | P10 | CH344L_RST | CH344L 复位 |
+| P01 | USER_LED_G | 绿 LED | P11 | USB_HUB_Reset | USB hub 复位 |
+| P02 | USER_LED_B | 蓝 LED | P12 | 5V_ISO_OUT_EN | RS485 隔离电源 |
+| P03 | VCC3V3_SD_EN | SD 卡电源 | P13 | HP_CTL_H | 耳机功放控制 |
+| P04 | 5V_ISO_OUT_CAN_EN | CAN 隔离电源 | P14 | (NC) | 测试点 |
+| P05 | CAN_120R_EN | CAN 端接 | P15 | (NC) | 测试点 |
+| P06 | RS485_1_120R_EN | RS485_1 端接 | P16 | 4G Module_Select | |
+| P07 | RS485_2_120R_EN | RS485_2 端接 | P17 | ACT_LED | 指示 LED |
+
+```bash
+# 确认芯片型号
+cat /sys/bus/i2c/devices/4-0021/name
+
+# 确认注册与线名
+gpiodetect | grep 4-0021
+
+# 查看引脚信息
+gpioinfo -c gpiochip6
+
+# 根据名字来查看引脚信息
+gpioinfo HP_CTL_H
+
+# 读写
+## 读 P12
+gpioget -c <pca9535的gpiochip> 12
+## 写 P12
+gpioset -c <pca9535的gpiochip> 12=1
 ```
 
 ## eeprom

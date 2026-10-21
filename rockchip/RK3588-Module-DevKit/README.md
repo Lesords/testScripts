@@ -10,6 +10,7 @@
 - [双网口测试](#双网口测试)
 - [音频测试 (ES8311)](#音频测试-es8311)
 - [风扇](#风扇)
+- [蜂鸣器](#蜂鸣器)
 - [LED 灯](#led-灯)
 - [GPIO 扩展 PCA9535](#gpio-扩展-pca9535)
 - [eeprom](#eeprom)
@@ -150,6 +151,18 @@ echo 200 > $H/pwm1
 cat $H/fan1_input
 
 # 回滚:overlays= 行删掉 fan-manual 重启,恢复自动温控
+```
+
+## 蜂鸣器
+
+BUZZER = GPIO3_D0(gpiochip3 line 24,纯 GPIO 无硬件 PWM)。
+
+```bash
+# libgpiod v2(gpioset --version 区分:1.6.x=v1,2.x=v2)
+# 打开
+gpioset -c gpiochip3 24=1
+# 关闭
+gpioset -c gpiochip3 24=0
 ```
 
 ## LED 灯

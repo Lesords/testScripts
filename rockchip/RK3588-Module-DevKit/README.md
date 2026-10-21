@@ -8,6 +8,7 @@
 - [EMMC 刷入步骤](#emmc-刷入步骤)
 - [设备状态](#设备状态)
 - [双网口测试](#双网口测试)
+- [音频测试 (ES8311)](#音频测试-es8311)
 - [风扇](#风扇)
 - [LED 灯](#led-灯)
 - [eeprom](#eeprom)
@@ -60,6 +61,51 @@ lspci | grep -i net
 ip link set end0 up
 ethtool end0 | grep -E 'Speed|Link detected'
 ethtool end1 | grep -E 'Speed|Link detected'
+```
+
+## 音频测试 (ES8311)
+
+```bash
+# 声卡确认
+cat /proc/asound/cards
+
+# 找 es8311 卡号(N 以实测为准)
+aplay -l | grep -i es8311
+
+# 安装工具
+sudo apt install mpg123
+# 播放(耳机口)
+mpg123 -a hw:N,0 ./test.mp3
+# 或
+aplay -D plughw:N,0 ./test.wav
+# 例子
+mpg123 -a hw:2,0 ./test.mp3
+
+# 录音回环(耳机麦克风采→耳机放)
+arecord -D hw:N,0 -f cd | aplay -D hw:N,0 -f cd
+# 例子
+arecord -D hw:2,0 -f cd | aplay -D hw:2,0 -f cd
+
+# 耳机插拔检测
+cat /sys/kernel/debug/gpio | grep -i hp_DET
+```
+
+音频配置（没有声音时）
+```bash
+amixer -c 2 cset name='Headphone'         1   > /dev/null 2>&1
+amixer -c 2 cset name='hp switch'         1   > /dev/null 2>&1
+amixer -c 2 cset name='DAC SDP MUTE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC DSM MUTE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC DEM MUTE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC INVERT'        0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC RAM CLR'       0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC RAMP RATE'     0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC VOLUME'        120 > /dev/null 2>&1
+amixer -c 2 cset name='DAC OFFSET'        0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC SDP SRC MUX'   0   > /dev/null 2>&1
+
+# 存住,下次开机免跑
+alsactl store
 ```
 
 ## 风扇

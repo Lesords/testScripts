@@ -1,0 +1,300 @@
+# RK3588-Module-DevKit (reComputer Industrial RK3588)
+
+> 板卡:RK3588J SoM + 工业 EVT 载板。
+> 固件:armbian vendor 内核 6.1.172,板型 `Recomputer-rk3588-industrial`(GNOME 桌面)。
+
+## 目录
+
+- [EMMC 刷入步骤](#emmc-刷入步骤)
+- [设备状态](#设备状态)
+- [双网口测试](#双网口测试)
+- [风扇](#风扇)
+- [LED 灯](#led-灯)
+- [eeprom](#eeprom)
+- [双 RTC 测试](#双-rtc-测试)
+- [USB 测试](#usb-测试)
+- [M.2 NVMe 测试 (PCIe3x4)](#m2-nvme-测试-pcie3x4)
+- [M.2 / mini-PCIe 其它插槽](#m2--mini-pcie-其它插槽)
+- [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
+- [HDMI / DP 显示](#hdmi--dp-显示)
+- [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
+- [NPU 测试](#npu-测试)
+- [eMMC 健康状态](#emmc-健康状态)
+- [压力测试](#压力测试)
+
+## EMMC 刷入步骤
+
+```bash
+# linux
+upgrade_tool db rk3588_spl_loader_v1.16.113.bin
+upgrade_tool wl 0 Armbian-unofficial_26.11.0-trunk_Recomputer-rk3588-industrial_resolute_vendor_6.1.172_gnome_desktop.img
+upgrade_tool rd
+```
+
+## 设备状态
+
+```bash
+# 电源域状态
+cat /sys/kernel/debug/pm_genpd/pm_genpd_summary
+
+# SoC 温度(风扇温控基于 soc_thermal,38°C 起步调速;zone 编号动态,先看 type)
+cat /sys/class/thermal/thermal_zone*/type
+cat /sys/class/thermal/thermal_zone*/temp
+```
+
+## 双网口测试
+
+| 接口 | 对应 | 硬件 | 驱动 |
+| ---- | ---- | ---- | ---- |
+| end0 | RJ45#2 | RTL8111H(载板,PCIe2.0) | **r8168** |
+| end1 | RJ45#1(带 PoE) | MAE0621A PHY(SoM 焊死,RGMII→GMAC0) | **st_gmac** |
+
+```bash
+# 驱动归属确认(实测:end0=r8168 / end1=st_gmac)
+ethtool -i end0 | grep driver
+ethtool -i end1 | grep driver
+lspci | grep -i net
+# RTL8111
+
+# 链路与连通(end1 已实测 1000Mb/s + DHCP)
+ip link set end0 up
+ethtool end0 | grep -E 'Speed|Link detected'
+ethtool end1 | grep -E 'Speed|Link detected'
+```
+
+## 风扇
+
+温控 38-80°C 八档自动调速
+
+```bash
+# 按名字定位 hwmon(编号动态分配)
+H=$(for d in /sys/class/hwmon/hwmon*; do [ "$(cat $d/name 2>/dev/null)" = pwmfan ] && echo $d && break; done)
+
+# 读转速(RPM)
+cat $H/fan1_input
+
+# 手动控制(占空比 0~255;改回请设非零值,勿 unbind)
+## 全速
+echo 255 > $H/pwm1
+## 低速
+echo 100 > $H/pwm1
+```
+
+## LED 灯
+
+```bash
+# 节点确认(ACT 在跳 = 心跳活着)
+ls /sys/class/leds/
+
+# 手动控制 RGB 灯
+## 点亮
+echo 255 > /sys/class/leds/led-user-r/brightness
+echo 255 > /sys/class/leds/led-user-g/brightness
+echo 255 > /sys/class/leds/led-user-b/brightness
+
+echo 0   > /sys/class/leds/led-user-r/brightness
+echo 0   > /sys/class/leds/led-user-g/brightness
+echo 0   > /sys/class/leds/led-user-b/brightness
+
+# 手动控制 ACT 灯
+echo none        > /sys/class/leds/led-act/trigger
+echo 255         > /sys/class/leds/led-act/brightness
+# 改回心跳
+echo heartbeat   > /sys/class/leds/led-act/trigger
+```
+
+## eeprom
+
+```bash
+# 查看 eeprom 节点
+ls /sys/bus/i2c/devices/ | grep 0050
+
+# 读 eeprom 内容
+cat /sys/bus/i2c/devices/6-0050/eeprom | hexdump -C
+
+# 写保护引脚(GPIO0_C6_u)
+## 拉低解锁
+gpioset -c gpiochip0 22=0
+## 拉低锁定
+gpioset -c gpiochip0 22=1
+
+# 写入测试(写入后再读,应看到内容变化)
+echo -n "rk35xx01B0" > /sys/bus/i2c/devices/6-0050/eeprom
+
+# 清空
+printf '\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff' | \
+  dd of=/sys/bus/i2c/devices/6-0050/eeprom
+```
+
+## 双 RTC 测试
+
+```bash
+# 最简读法(无需安装包)
+for r in rtc0 rtc1; do echo -n "$r: "; cat /sys/class/rtc/$r/date; cat /sys/class/rtc/$r/time; done
+
+# 安装依赖
+sudo apt install util-linux-extra
+
+# 分辨两片 rtc(看设备挂的 i2c 总线)
+for r in /sys/class/rtc/rtc?; do echo "$r $(cat $r/name) $(readlink -f $r/device)"; done
+
+# 读两片时间(默认 hwclock 只动 rtc0,注意用 --rtc 指定)
+sudo hwclock -r --rtc /dev/rtc0
+sudo hwclock -r --rtc /dev/rtc1
+
+# 写入测试
+sudo hwclock --set --date "2026-10-13 12:00:00" --rtc /dev/rtc1
+sudo hwclock -r --rtc /dev/rtc1
+```
+
+## USB 测试
+
+```bash
+lsusb
+# 期望 0424 开头的 Microchip hub(USB5744;具体 PID 以实测为准)
+
+# 4 个 Type-A 逐一插 U 盘
+lsblk
+# 出现 sda
+```
+
+## M.2 NVMe 测试 (PCIe3x4)
+
+```bash
+lspci | grep -i nvme
+# 期望出现 NVMe 控制器
+sudo lspci -vvv | grep -i 'lnksta'
+# 期望 Speed 8GT/s, Width x4(PCIe3.0 x4,每 lane 8GT/s)
+
+sudo apt install nvme-cli
+sudo nvme list
+sudo nvme smart-log /dev/nvme0
+
+# 读写快测
+dd if=/dev/nvme0n1 of=/tmp/t bs=1M count=512 oflag=direct
+dd if=/tmp/t of=/dev/null bs=1M count=512 iflag=direct
+```
+
+## M.2 / mini-PCIe 其它插槽
+
+| 插槽 | 总线 | 说明 |
+| ---- | ---- | ---- |
+| M.2 KEY-M (PCIE20) | pcie2x1l1 | PCIe2.0 x1(sheet 18);PERST 与 RTL8111H 共用一根线。**已插 476.9G SSD 实测枚举成功(2026-10-20)** |
+| M.2 KEY-E (WIFI_BT) | pcie2x1l0 + USB2 + UART7 | **RTL8822CE 实测通过**;BT 固定 ttyS7;板载 WIFI_DISABLE(GPIO3_A2)/BT_DISABLE(GPIO1_C4) |
+| mini-PCIe | SPI0_M3 | **spidev 已配置(`/dev/spidev0.0`)**;WM1302(SX1302)测试中,见 LoRa 章节 |
+
+## WiFi 测试 (M.2 E-key)
+
+模块型号：`RTL8822CE`
+引脚信息：`GPIO1_C4 = BT_DISABLE_N`
+
+```bash
+# 1. 确认设备与驱动绑定(lspci 看到 RTL8822CE,dmesg 有 rtw_8822ce)
+lspci | grep -i network
+dmesg | grep rtw_8822ce | tail -3
+
+# 2. 网络接口(注意:叫 wlP2p33s0,不是 wlan0 —— systemd 预测命名)
+ip -br link | grep wl
+
+# 3. 扫描(能看到 AP 列表 = 射频链路+固件全通)
+nmcli device wifi list
+
+# 4. 连接
+## 连接开放网络
+nmcli device wifi connect "SEEED-Guest"
+## 连接加密网络
+nmcli device wifi connect "SEEED-OFFICE" password "xxxx"
+## 查看连接状态
+nmcli device status
+
+# 5. 速率/信号确认(连上后)
+iw dev wlP2p33s0 link
+```
+
+## HDMI / DP 显示
+
+```bash
+# 连接状态(插拔屏看对应输出变 connected)
+cat /sys/class/drm/card*-HDMI-A-1/status
+cat /sys/class/drm/card*-DP-1/status
+```
+
+## GPU 测试 (Mali G610)
+
+RK3588 为 Mali-G610(panthor/CSF 体系,vendor 内核走 Arm BSP + libmali g610):
+
+```bash
+sudo apt install -y glmark2-es2-drm glmark2-es2
+
+# 桌面占用 DRM master 时先停桌面
+systemctl stop gdm
+timeout 60 glmark2-es2-drm
+systemctl start gdm
+
+# GNOME/Wayland 下跑
+env WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 \
+   timeout 20 glmark2-es2-wayland --off-screen >/dev/null 2>&1
+# Or
+WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 glmark2-es2-wayland --off-screen
+
+# 查看 GPU 负载
+cat /sys/class/devfreq/fb000000.gpu-panthor/load
+# Or
+cat /sys/class/devfreq/fb000000.gpu-*/load
+
+# 查看 GPU 电源状态(只有运行中才会开电)
+cat /sys/kernel/debug/pm_genpd/pm_genpd_summary | grep -i gpu
+```
+
+## NPU 测试
+
+测试文件
+```bash
+rknn_benchmark_Linux.tar.gz
+```
+
+拷贝文件到 RK3588 开发板
+```bash
+scp rknn_benchmark_Linux.tar.gz root@<IP_ADDRESS>:/root
+```
+
+解压后进入目录
+```bash
+tar -zxvf rknn_benchmark_Linux.tar.gz
+
+cd rknn_benchmark_Linux
+
+# 执行（高负载）
+./start.sh
+
+# 单核测试(较低负载)
+./open_npu.sh
+```
+
+查看 NPU 负载
+```bash
+cat /sys/kernel/debug/rknpu/load
+```
+
+## eMMC 健康状态
+
+```bash
+# 查看健康状态
+cat /sys/block/mmcblk*/device/life_time
+# 实测 0x01 0x01(Normal)
+
+# 或 mmc-utils 详细版
+sudo apt install mmc-utils
+sudo mmc extcsd read /dev/mmcblk0 | grep -E 'Pre EOL|Life Time'
+# 期望:Pre EOL 0x01(Normal),Life Time 0x01 0x01
+```
+
+## 压力测试
+
+```bash
+sudo apt install stress-ng
+# 4×A76 + 4×A55 共 8 核 + 内存压力,30 分钟
+stress-ng --cpu 8 --vm 4 --vm-bytes 256M --timeout 30m --metrics-brief
+# 期间另开终端看热节流与风扇响应
+cat /sys/class/thermal/thermal_zone*/temp
+```

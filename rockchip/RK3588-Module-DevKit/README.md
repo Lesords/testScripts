@@ -18,6 +18,7 @@
 - [M.2 NVMe 测试 (PCIe3x4)](#m2-nvme-测试-pcie3x4)
 - [M.2 / mini-PCIe 其它插槽](#m2--mini-pcie-其它插槽)
 - [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
+- [蓝牙测试 (M.2 E-key)](#蓝牙测试-m2-e-key)
 - [HDMI / DP 显示](#hdmi--dp-显示)
 - [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
 - [NPU 测试](#npu-测试)
@@ -315,6 +316,32 @@ nmcli device status
 
 # 5. 速率/信号确认(连上后)
 iw dev wlP2p33s0 link
+```
+
+## 蓝牙测试 (M.2 E-key)
+
+```bash
+# 查看 HCI 设备状态
+hciconfig -a
+
+# 扫描附近的蓝牙设备
+bluetoothctl --timeout 15 -- scan on
+
+# 连接蓝牙设备（以设备 MAC 地址为例）
+bluetoothctl -- connect <MAC>
+bluetoothctl -- connect D0:67:94:74:3F:CD
+
+# 断开连接
+bluetoothctl -- disconnect <MAC>
+bluetoothctl -- disconnect D0:67:94:74:3F:CD
+
+# 已配对设备列表
+bluetoothctl devices
+
+# 已连接设备的详细信息
+bluetoothctl info
+bluetoothctl info <MAC>
+bluetoothctl info D0:67:94:74:3F:CD
 ```
 
 ## HDMI / DP 显示

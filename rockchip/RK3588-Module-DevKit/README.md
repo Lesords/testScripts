@@ -126,6 +126,30 @@ echo 255 > $H/pwm1
 echo 100 > $H/pwm1
 ```
 
+### 手动控制(fan-manual overlay)
+
+```bash
+# 部署 overlay
+scp fan-manual/output/fan-manual.dtbo \
+    root@<IP_ADDRESS>:/boot/dtb/rockchip/overlay/rk3588-fan-manual.dtbo
+
+# 启用(overlays= 行存在则追加,不存在则新建)并重启
+ssh root@<IP_ADDRESS> "grep -q '^overlays=' /boot/armbianEnv.txt \
+    && sed -i 's/^overlays=\(.*\)/overlays=\1 rk3588-fan-manual/' /boot/armbianEnv.txt \
+    || echo 'overlays=rk3588-fan-manual' >> /boot/armbianEnv.txt; reboot"
+
+# 重启后手动控制(按名字定位 hwmon)
+H=$(for d in /sys/class/hwmon/hwmon*; do [ "$(cat $d/name 2>/dev/null)" = pwmfan ] && echo $d && break; done)
+
+# 占空比 0~255,立即生效,不会被温控抢回
+echo 200 > $H/pwm1
+
+# 转速 RPM
+cat $H/fan1_input
+
+# 回滚:overlays= 行删掉 fan-manual 重启,恢复自动温控
+```
+
 ## LED 灯
 
 ```bash

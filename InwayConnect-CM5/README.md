@@ -27,6 +27,8 @@
 ```bash
 # 拉取仓库
 git clone https://github.com/Lesords/seeed-linux-dtoverlays.git -b reachy_mini --depth=1
+# Or
+git clone https://github.com/Seeed-Studio/seeed-linux-dtoverlays -b master --depth=1
 
 # 部署
 sudo ./scripts/reTerminal.sh --device rpi-cm5-inway --keep-kernel

@@ -13,6 +13,7 @@
 - [蜂鸣器](#蜂鸣器)
 - [LED 灯](#led-灯)
 - [GPIO 扩展 PCA9535](#gpio-扩展-pca9535)
+- [RS485 / RS232 测试 (CH344L)](#rs485--rs232-测试-ch344l)
 - [eeprom](#eeprom)
 - [双 RTC 测试](#双-rtc-测试)
 - [USB 测试](#usb-测试)
@@ -223,6 +224,74 @@ gpioget -c <pca9535的gpiochip> 12
 ## 写 P12
 gpioset -c <pca9535的gpiochip> 12=1
 ```
+
+## RS485 / RS232 测试 (CH344L)
+
+```bash
+# 查看 ttyACM 设备
+ls /dev/ttyACM*
+# 期望 ttyACM0~3(开箱即有)
+
+# 查看设备
+lsusb | grep -i QinHeng
+
+# 查看内核日志
+dmesg | grep cdc_acm | tail -4
+```
+
+查看引脚配置状态
+```bash
+cat /sys/kernel/debug/gpio | grep -i 485
+# 参考输出
+ gpio-499 (RS485_1_120R_EN     |sysfs               ) out hi
+ gpio-500 (RS485_2_120R_EN     )
+cat /sys/kernel/debug/gpio | grep -i 5V_ISO
+# 参考输出
+ gpio-497 (5V_ISO_OUT_CAN_EN   )
+ gpio-503 (5V_ISO_OUT_EN       |sysfs               ) out hi
+```
+
+手动配置引脚操作
+```bash
+# 拉高 5V_ISO_OUT_EN
+cd /sys/class/gpio
+echo 503 > ./export
+echo out > ./gpio503/direction
+echo 1 > ./gpio503/value
+
+# 拉高 RS485_1_120R_EN
+cd /sys/class/gpio
+echo 499 > ./export
+echo out > ./gpio499/direction
+echo 1 > ./gpio499/value
+
+# 拉高 RS485_2_120R_EN, 参考上诉步骤，把 499 改为 500 即可
+```
+
+```bash
+# 安装工具
+sudo apt install minicom
+
+# RS232
+minicom -D /dev/ttyACM0
+
+# RS485-1
+minicom -D /dev/ttyACM1
+
+# RS485-2
+minicom -D /dev/ttyACM2
+
+# 接收参考命令
+stty -F /dev/ttyACM0 115200 raw -echo # 可以无须配置
+cat /dev/ttyACM0 &
+
+# 手动发送参考命令
+echo "rs232 test" > /dev/ttyACM0
+```
+
+注意：
+- RS232 和 RS485 都无须配置波特率
+- RS232 需要接地，RS485 可以不需要接地
 
 ## eeprom
 

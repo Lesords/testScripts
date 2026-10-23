@@ -6,6 +6,7 @@
 ## 目录
 
 - [EMMC 刷入步骤](#emmc-刷入步骤)
+- [SSH 服务](SSH-服务)
 - [设备状态](#设备状态)
 - [双网口测试](#双网口测试)
 - [音频测试 (ES8311)](#音频测试-es8311)
@@ -37,6 +38,15 @@ upgrade_tool wl 0 Armbian-unofficial_26.11.0-trunk_Recomputer-rk3588-industrial_
 upgrade_tool rd
 ```
 
+## SSH 服务
+
+默认 SSH 在第二次启动后关闭，所以需要手动打开，步骤如下：
+
+```bash
+# 通过串口进入设备，然后执行以下命令开启 SSH 服务
+sudo systemctl enable ssh && systemctl start ssh
+```
+
 ## 设备状态
 
 ```bash
@@ -46,6 +56,12 @@ cat /sys/kernel/debug/pm_genpd/pm_genpd_summary
 # SoC 温度(风扇温控基于 soc_thermal,38°C 起步调速;zone 编号动态,先看 type)
 cat /sys/class/thermal/thermal_zone*/type
 cat /sys/class/thermal/thermal_zone*/temp
+
+# CPU 频率
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq
+
+# CPU 节点
+cd /sys/devices/system/cpu
 ```
 
 ## 双网口测试

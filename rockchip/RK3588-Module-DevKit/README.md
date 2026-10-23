@@ -25,6 +25,7 @@
 - [HDMI / DP 显示](#hdmi--dp-显示)
 - [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
 - [NPU 测试](#npu-测试)
+- [CSI 摄像头测试](#csi-摄像头测试)
 - [eMMC 健康状态](#emmc-健康状态)
 - [压力测试](#压力测试)
 - [通讯口](#通讯口)
@@ -456,6 +457,36 @@ cd rknn_benchmark_Linux
 查看 NPU 负载
 ```bash
 cat /sys/kernel/debug/rknpu/load
+```
+
+## CSI 摄像头测试
+
+摄像头型号：
+```bash
+Raspberry Pi Camera Module 3
+```
+
+环境依赖
+```bash
+sudo apt install -y gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-base
+```
+
+扫描摄像头
+```bash
+# cam0 - 右边
+i2cdetect -r -y 2
+
+# cam1 - 左边
+i2cdetect -r -y 7
+```
+
+抓取图片
+```bash
+# cam0 - 右边
+gst-launch-1.0 v4l2src device=/dev/video22 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam0.jpg
+
+# cam1 - 左边
+gst-launch-1.0 v4l2src device=/dev/video31 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam1.jpg
 ```
 
 ## eMMC 健康状态

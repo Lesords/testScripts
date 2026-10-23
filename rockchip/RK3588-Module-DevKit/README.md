@@ -28,6 +28,9 @@
 - [NPU 测试](#npu-测试)
 - [eMMC 健康状态](#emmc-健康状态)
 - [压力测试](#压力测试)
+- [通讯口](#通讯口)
+    - [DI](#di)
+    - [DO](#do)
 
 ## EMMC 刷入步骤
 
@@ -545,3 +548,55 @@ stress-ng --cpu 8 --vm 4 --vm-bytes 256M --timeout 30m --metrics-brief
 # 期间另开终端看热节流与风扇响应
 cat /sys/class/thermal/thermal_zone*/temp
 ```
+
+## 通讯口
+
+### DI
+
+引脚信息
+```bash
+DI_1 - GPIO1_B6_u - 14 -> 46
+DI_2 - GPIO1_B7_u - 15 -> 47
+```
+
+控制方法
+```bash
+# DI_1
+cd /sys/class/gpio
+echo 46 > ./export
+echo in > ./gpio46/direction
+cat ./gpio46/value
+
+# DI_2
+cd /sys/class/gpio
+echo 47 > ./export
+echo in > ./gpio47/direction
+cat ./gpio47/value
+```
+
+注：默认为 1，有外部供电时为 0
+
+### DO
+
+引脚信息
+```bash
+DO_1 - GPIO1_D6_u - 30 -> 62
+DO_2 - GPIO1_D7_u - 31 -> 63
+```
+
+控制方法
+```bash
+# DO_1
+cd /sys/class/gpio
+echo 62 > ./export
+echo out > ./gpio62/direction
+echo 1 > ./gpio62/value
+
+# DO_2
+cd /sys/class/gpio
+echo 63 > ./export
+echo out > ./gpio63/direction
+echo 1 > ./gpio63/value
+```
+
+注：默认不导通，输出为 1 时导通，无法输出高电平

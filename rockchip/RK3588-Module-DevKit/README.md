@@ -18,11 +18,12 @@
 - [双 RTC 测试](#双-rtc-测试)
 - [USB 测试](#usb-测试)
 - [M.2 NVMe 测试 (PCIe3x4)](#m2-nvme-测试-pcie3x4)
-- [M.2 / mini-PCIe 其它插槽](#m2--mini-pcie-其它插槽)
-- [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
-- [蓝牙测试 (M.2 E-key)](#蓝牙测试-m2-e-key)
-- [LoRa 测试 (WM1302, mini-PCIe)](#lora-测试-wm1302-mini-pcie)
-- [4G 模块测试 (EC25, mini-PCIe)](#4g-模块测试-ec25-mini-pcie)
+- [M.2 E-key](#m2-e-key)
+    - [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
+    - [蓝牙测试 (M.2 E-key)](#蓝牙测试-m2-e-key)
+- [mini-PCIe](#mini-pcie)
+    - [LoRa 测试 (WM1302, mini-PCIe)](#lora-测试-wm1302-mini-pcie)
+    - [4G 模块测试 (EC25, mini-PCIe)](#4g-模块测试-ec25-mini-pcie)
 - [HDMI / DP 显示](#hdmi--dp-显示)
 - [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
 - [NPU 测试](#npu-测试)
@@ -303,6 +304,10 @@ lsblk
 
 ## M.2 NVMe 测试 (PCIe3x4)
 
+| 插槽 | 总线 | 说明 |
+| ---- | ---- | ---- |
+| M.2 KEY-M (PCIE20) | pcie2x1l1 | PCIe2.0 x1(sheet 18);PERST 与 RTL8111H 共用一根线。**已插 476.9G SSD 实测枚举成功(2026-10-20)** |
+
 ```bash
 lspci | grep -i nvme
 # 期望出现 NVMe 控制器
@@ -318,15 +323,13 @@ dd if=/dev/nvme0n1 of=/tmp/t bs=1M count=512 oflag=direct
 dd if=/tmp/t of=/dev/null bs=1M count=512 iflag=direct
 ```
 
-## M.2 / mini-PCIe 其它插槽
+## M.2 E-key
 
 | 插槽 | 总线 | 说明 |
 | ---- | ---- | ---- |
-| M.2 KEY-M (PCIE20) | pcie2x1l1 | PCIe2.0 x1(sheet 18);PERST 与 RTL8111H 共用一根线。**已插 476.9G SSD 实测枚举成功(2026-10-20)** |
 | M.2 KEY-E (WIFI_BT) | pcie2x1l0 + USB2 + UART7 | **RTL8822CE 实测通过**;BT 固定 ttyS7;板载 WIFI_DISABLE(GPIO3_A2)/BT_DISABLE(GPIO1_C4) |
-| mini-PCIe | SPI0_M3 | **spidev 已配置(`/dev/spidev0.0`)**;WM1302(SX1302)测试中,见 LoRa 章节 |
 
-## WiFi 测试 (M.2 E-key)
+### WiFi 测试 (M.2 E-key)
 
 模块型号：`RTL8822CE`
 引脚信息：`GPIO1_C4 = BT_DISABLE_N`
@@ -354,7 +357,7 @@ nmcli device status
 iw dev wlP2p33s0 link
 ```
 
-## 蓝牙测试 (M.2 E-key)
+### 蓝牙测试 (M.2 E-key)
 
 ```bash
 # 查看 HCI 设备状态
@@ -380,7 +383,13 @@ bluetoothctl info <MAC>
 bluetoothctl info D0:67:94:74:3F:CD
 ```
 
-## LoRa 测试 (WM1302, mini-PCIe)
+## mini-PCIe
+
+| 插槽 | 总线 | 说明 |
+| ---- | ---- | ---- |
+| mini-PCIe | SPI0_M3 | **spidev 已配置(`/dev/spidev0.0`)**;WM1302(SX1302)测试完成 |
+
+### LoRa 测试 (WM1302, mini-PCIe)
 
 ```bash
 # 克隆仓库
@@ -395,7 +404,7 @@ cd packet_forwarder/
 sudo ./lora_pkt_fwd -c global_conf.json.sx1250.US915
 ```
 
-## 4G 模块测试 (EC25, mini-PCIe)
+### 4G 模块测试 (EC25, mini-PCIe)
 
 模块信息
 ```bash

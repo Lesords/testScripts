@@ -8,15 +8,21 @@
 - [EMMC 刷入步骤](#emmc-刷入步骤)
 - [SSH 服务](#ssh-服务)
 - [设备状态](#设备状态)
-- [双网口测试](#双网口测试)
-- [音频测试 (ES8311)](#音频测试-es8311)
+- [压力测试](#压力测试)
+- [eMMC 健康状态](#emmc-健康状态)
+- [NPU 测试](#npu-测试)
+- [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
 - [风扇](#风扇)
 - [蜂鸣器](#蜂鸣器)
 - [LED 灯](#led-灯)
 - [GPIO 扩展 PCA9535](#gpio-扩展-pca9535)
 - [eeprom](#eeprom)
 - [双 RTC 测试](#双-rtc-测试)
+- [双网口测试](#双网口测试)
 - [USB 测试](#usb-测试)
+- [音频测试 (ES8311)](#音频测试-es8311)
+- [HDMI / DP 显示](#hdmi--dp-显示)
+- [CSI 摄像头测试](#csi-摄像头测试)
 - [M.2 NVMe 测试 (PCIe3x4)](#m2-nvme-测试-pcie3x4)
 - [M.2 E-key](#m2-e-key)
     - [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
@@ -24,12 +30,6 @@
 - [mini-PCIe](#mini-pcie)
     - [LoRa 测试 (WM1302, mini-PCIe)](#lora-测试-wm1302-mini-pcie)
     - [4G 模块测试 (EC25, mini-PCIe)](#4g-模块测试-ec25-mini-pcie)
-- [HDMI / DP 显示](#hdmi--dp-显示)
-- [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
-- [NPU 测试](#npu-测试)
-- [CSI 摄像头测试](#csi-摄像头测试)
-- [eMMC 健康状态](#emmc-健康状态)
-- [压力测试](#压力测试)
 - [通讯口](#通讯口)
     - [DI](#di)
     - [DO](#do)
@@ -70,69 +70,84 @@ cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq
 cd /sys/devices/system/cpu
 ```
 
-## 双网口测试
-
-| 接口 | 对应 | 硬件 | 驱动 |
-| ---- | ---- | ---- | ---- |
-| end0 | RJ45#2 | RTL8111H(载板,PCIe2.0) | **r8168** |
-| end1 | RJ45#1(带 PoE) | MAE0621A PHY(SoM 焊死,RGMII→GMAC0) | **st_gmac** |
+## 压力测试
 
 ```bash
-# 驱动归属确认(实测:end0=r8168 / end1=st_gmac)
-ethtool -i end0 | grep driver
-ethtool -i end1 | grep driver
-lspci | grep -i net
-# RTL8111
-
-# 链路与连通(end1 已实测 1000Mb/s + DHCP)
-ip link set end0 up
-ethtool end0 | grep -E 'Speed|Link detected'
-ethtool end1 | grep -E 'Speed|Link detected'
+sudo apt install stress-ng
+# 4×A76 + 4×A55 共 8 核 + 内存压力,30 分钟
+stress-ng --cpu 8 --vm 4 --vm-bytes 256M --timeout 30m --metrics-brief
+# 期间另开终端看热节流与风扇响应
+cat /sys/class/thermal/thermal_zone*/temp
 ```
 
-## 音频测试 (ES8311)
+## eMMC 健康状态
 
 ```bash
-# 声卡确认
-cat /proc/asound/cards
+# 查看健康状态
+cat /sys/block/mmcblk*/device/life_time
+# 实测 0x01 0x01(Normal)
 
-# 找 es8311 卡号(N 以实测为准)
-aplay -l | grep -i es8311
-
-# 安装工具
-sudo apt install mpg123
-# 播放(耳机口)
-mpg123 -a hw:N,0 ./test.mp3
-# 或
-aplay -D plughw:N,0 ./test.wav
-# 例子
-mpg123 -a hw:2,0 ./test.mp3
-
-# 录音回环(耳机麦克风采→耳机放)
-arecord -D hw:N,0 -f cd | aplay -D hw:N,0 -f cd
-# 例子
-arecord -D hw:2,0 -f cd | aplay -D hw:2,0 -f cd
-
-# 耳机插拔检测
-cat /sys/kernel/debug/gpio | grep -i hp_DET
+# 或 mmc-utils 详细版
+sudo apt install mmc-utils
+sudo mmc extcsd read /dev/mmcblk0 | grep -E 'Pre EOL|Life Time'
+# 期望:Pre EOL 0x01(Normal),Life Time 0x01 0x01
 ```
 
-音频配置（没有声音时）
-```bash
-amixer -c 2 cset name='Headphone'         1   > /dev/null 2>&1
-amixer -c 2 cset name='hp switch'         1   > /dev/null 2>&1
-amixer -c 2 cset name='DAC SDP MUTE'      0   > /dev/null 2>&1
-amixer -c 2 cset name='DAC DSM MUTE'      0   > /dev/null 2>&1
-amixer -c 2 cset name='DAC DEM MUTE'      0   > /dev/null 2>&1
-amixer -c 2 cset name='DAC INVERT'        0   > /dev/null 2>&1
-amixer -c 2 cset name='DAC RAM CLR'       0   > /dev/null 2>&1
-amixer -c 2 cset name='DAC RAMP RATE'     0   > /dev/null 2>&1
-amixer -c 2 cset name='DAC VOLUME'        120 > /dev/null 2>&1
-amixer -c 2 cset name='DAC OFFSET'        0   > /dev/null 2>&1
-amixer -c 2 cset name='DAC SDP SRC MUX'   0   > /dev/null 2>&1
+## NPU 测试
 
-# 存住,下次开机免跑
-alsactl store
+测试文件
+```bash
+rknn_benchmark_Linux.tar.gz
+```
+
+拷贝文件到 RK3588 开发板
+```bash
+scp rknn_benchmark_Linux.tar.gz root@<IP_ADDRESS>:/root
+```
+
+解压后进入目录
+```bash
+tar -zxvf rknn_benchmark_Linux.tar.gz
+
+cd rknn_benchmark_Linux
+
+# 执行（高负载）
+./start.sh
+
+# 单核测试(较低负载)
+./open_npu.sh
+```
+
+查看 NPU 负载
+```bash
+cat /sys/kernel/debug/rknpu/load
+```
+
+## GPU 测试 (Mali G610)
+
+RK3588 为 Mali-G610(panthor/CSF 体系,vendor 内核走 Arm BSP + libmali g610):
+
+```bash
+sudo apt install -y glmark2-es2-drm glmark2-es2
+
+# 桌面占用 DRM master 时先停桌面
+systemctl stop gdm
+timeout 60 glmark2-es2-drm
+systemctl start gdm
+
+# GNOME/Wayland 下跑
+env WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 \
+   timeout 20 glmark2-es2-wayland --off-screen >/dev/null 2>&1
+# Or
+WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 glmark2-es2-wayland --off-screen
+
+# 查看 GPU 负载
+cat /sys/class/devfreq/fb000000.gpu-panthor/load
+# Or
+cat /sys/class/devfreq/fb000000.gpu-*/load
+
+# 查看 GPU 电源状态(只有运行中才会开电)
+cat /sys/kernel/debug/pm_genpd/pm_genpd_summary | grep -i gpu
 ```
 
 ## 风扇
@@ -291,6 +306,26 @@ sudo hwclock --set --date "2026-10-13 12:00:00" --rtc /dev/rtc1
 sudo hwclock -r --rtc /dev/rtc1
 ```
 
+## 双网口测试
+
+| 接口 | 对应 | 硬件 | 驱动 |
+| ---- | ---- | ---- | ---- |
+| end0 | RJ45#2 | RTL8111H(载板,PCIe2.0) | **r8168** |
+| end1 | RJ45#1(带 PoE) | MAE0621A PHY(SoM 焊死,RGMII→GMAC0) | **st_gmac** |
+
+```bash
+# 驱动归属确认(实测:end0=r8168 / end1=st_gmac)
+ethtool -i end0 | grep driver
+ethtool -i end1 | grep driver
+lspci | grep -i net
+# RTL8111
+
+# 链路与连通(end1 已实测 1000Mb/s + DHCP)
+ip link set end0 up
+ethtool end0 | grep -E 'Speed|Link detected'
+ethtool end1 | grep -E 'Speed|Link detected'
+```
+
 ## USB 测试
 
 ```bash
@@ -300,6 +335,89 @@ lsusb
 # 4 个 Type-A 逐一插 U 盘
 lsblk
 # 出现 sda
+```
+
+## 音频测试 (ES8311)
+
+```bash
+# 声卡确认
+cat /proc/asound/cards
+
+# 找 es8311 卡号(N 以实测为准)
+aplay -l | grep -i es8311
+
+# 安装工具
+sudo apt install mpg123
+# 播放(耳机口)
+mpg123 -a hw:N,0 ./test.mp3
+# 或
+aplay -D plughw:N,0 ./test.wav
+# 例子
+mpg123 -a hw:2,0 ./test.mp3
+
+# 录音回环(耳机麦克风采→耳机放)
+arecord -D hw:N,0 -f cd | aplay -D hw:N,0 -f cd
+# 例子
+arecord -D hw:2,0 -f cd | aplay -D hw:2,0 -f cd
+
+# 耳机插拔检测
+cat /sys/kernel/debug/gpio | grep -i hp_DET
+```
+
+音频配置（没有声音时）
+```bash
+amixer -c 2 cset name='Headphone'         1   > /dev/null 2>&1
+amixer -c 2 cset name='hp switch'         1   > /dev/null 2>&1
+amixer -c 2 cset name='DAC SDP MUTE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC DSM MUTE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC DEM MUTE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC INVERT'        0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC RAM CLR'       0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC RAMP RATE'     0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC VOLUME'        120 > /dev/null 2>&1
+amixer -c 2 cset name='DAC OFFSET'        0   > /dev/null 2>&1
+amixer -c 2 cset name='DAC SDP SRC MUX'   0   > /dev/null 2>&1
+
+# 存住,下次开机免跑
+alsactl store
+```
+
+## HDMI / DP 显示
+
+```bash
+# 连接状态(插拔屏看对应输出变 connected)
+cat /sys/class/drm/card*-HDMI-A-1/status
+cat /sys/class/drm/card*-DP-1/status
+```
+
+## CSI 摄像头测试
+
+摄像头型号：
+```bash
+Raspberry Pi Camera Module 3
+```
+
+环境依赖
+```bash
+sudo apt install -y gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-base
+```
+
+扫描摄像头
+```bash
+# cam0 - 右边
+i2cdetect -r -y 2
+
+# cam1 - 左边
+i2cdetect -r -y 7
+```
+
+抓取图片
+```bash
+# cam0 - 右边
+gst-launch-1.0 v4l2src device=/dev/video22 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam0.jpg
+
+# cam1 - 左边
+gst-launch-1.0 v4l2src device=/dev/video31 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam1.jpg
 ```
 
 ## M.2 NVMe 测试 (PCIe3x4)
@@ -448,124 +566,6 @@ dmesg | grep -E 'enx.*renamed'
 ping -I <enx**> www.baidu.com
 # 例子
 ping -I enx52af5d2e88d8 www.baidu.com
-```
-
-## HDMI / DP 显示
-
-```bash
-# 连接状态(插拔屏看对应输出变 connected)
-cat /sys/class/drm/card*-HDMI-A-1/status
-cat /sys/class/drm/card*-DP-1/status
-```
-
-## GPU 测试 (Mali G610)
-
-RK3588 为 Mali-G610(panthor/CSF 体系,vendor 内核走 Arm BSP + libmali g610):
-
-```bash
-sudo apt install -y glmark2-es2-drm glmark2-es2
-
-# 桌面占用 DRM master 时先停桌面
-systemctl stop gdm
-timeout 60 glmark2-es2-drm
-systemctl start gdm
-
-# GNOME/Wayland 下跑
-env WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 \
-   timeout 20 glmark2-es2-wayland --off-screen >/dev/null 2>&1
-# Or
-WAYLAND_DISPLAY=wayland-0 XDG_RUNTIME_DIR=/run/user/1000 glmark2-es2-wayland --off-screen
-
-# 查看 GPU 负载
-cat /sys/class/devfreq/fb000000.gpu-panthor/load
-# Or
-cat /sys/class/devfreq/fb000000.gpu-*/load
-
-# 查看 GPU 电源状态(只有运行中才会开电)
-cat /sys/kernel/debug/pm_genpd/pm_genpd_summary | grep -i gpu
-```
-
-## NPU 测试
-
-测试文件
-```bash
-rknn_benchmark_Linux.tar.gz
-```
-
-拷贝文件到 RK3588 开发板
-```bash
-scp rknn_benchmark_Linux.tar.gz root@<IP_ADDRESS>:/root
-```
-
-解压后进入目录
-```bash
-tar -zxvf rknn_benchmark_Linux.tar.gz
-
-cd rknn_benchmark_Linux
-
-# 执行（高负载）
-./start.sh
-
-# 单核测试(较低负载)
-./open_npu.sh
-```
-
-查看 NPU 负载
-```bash
-cat /sys/kernel/debug/rknpu/load
-```
-
-## CSI 摄像头测试
-
-摄像头型号：
-```bash
-Raspberry Pi Camera Module 3
-```
-
-环境依赖
-```bash
-sudo apt install -y gstreamer1.0-tools gstreamer1.0-plugins-good gstreamer1.0-plugins-base
-```
-
-扫描摄像头
-```bash
-# cam0 - 右边
-i2cdetect -r -y 2
-
-# cam1 - 左边
-i2cdetect -r -y 7
-```
-
-抓取图片
-```bash
-# cam0 - 右边
-gst-launch-1.0 v4l2src device=/dev/video22 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam0.jpg
-
-# cam1 - 左边
-gst-launch-1.0 v4l2src device=/dev/video31 num-buffers=1 ! video/x-raw,width=1920,height=1080,format=NV12 ! jpegenc ! filesink location=/tmp/cam1.jpg
-```
-
-## eMMC 健康状态
-
-```bash
-# 查看健康状态
-cat /sys/block/mmcblk*/device/life_time
-# 实测 0x01 0x01(Normal)
-
-# 或 mmc-utils 详细版
-sudo apt install mmc-utils
-sudo mmc extcsd read /dev/mmcblk0 | grep -E 'Pre EOL|Life Time'
-# 期望:Pre EOL 0x01(Normal),Life Time 0x01 0x01
-```
-
-## 压力测试
-
-```bash
-sudo apt install stress-ng
-# 4×A76 + 4×A55 共 8 核 + 内存压力,30 分钟
-stress-ng --cpu 8 --vm 4 --vm-bytes 256M --timeout 30m --metrics-brief
-# 期间另开终端看热节流与风扇响应
-cat /sys/class/thermal/thermal_zone*/temp
 ```
 
 ## 通讯口

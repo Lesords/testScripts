@@ -22,6 +22,7 @@
 - [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
 - [蓝牙测试 (M.2 E-key)](#蓝牙测试-m2-e-key)
 - [LoRa 测试 (WM1302, mini-PCIe)](#lora-测试-wm1302-mini-pcie)
+- [4G 模块测试 (EC25, mini-PCIe)](#4g-模块测试-ec25-mini-pcie)
 - [HDMI / DP 显示](#hdmi--dp-显示)
 - [GPU 测试 (Mali G610)](#gpu-测试-mali-g610)
 - [NPU 测试](#npu-测试)
@@ -392,6 +393,52 @@ make
 # 运行
 cd packet_forwarder/
 sudo ./lora_pkt_fwd -c global_conf.json.sx1250.US915
+```
+
+## 4G 模块测试 (EC25, mini-PCIe)
+
+模块信息
+```bash
+# 查看设备
+lsusb | grep -i EC25
+
+# 查看串口节点
+ls /dev/ttyUSB*
+```
+
+模块串口使用命令
+```bash
+minicom -D /dev/ttyUSB2 -b 115200
+# 需要输入 AT 命令来测试
+```
+
+AT 指令参考
+```bash
+纯测试：AT
+
+查询网络信息：AT+QNWINFO
+
+查询(U)SIM 卡的国际移动用户识别码：AT+CIMI
+```
+
+DNS 配置操作
+```bash
+# 打开配置文件
+sudo vim /etc/resolv.conf
+
+# 添加以下内容
+nameserver 114.114.114.114
+```
+
+网络测试
+```bash
+# enx** 节点获取命令
+dmesg | grep -E 'enx.*renamed'
+
+# 测试命令
+ping -I <enx**> www.baidu.com
+# 例子
+ping -I enx52af5d2e88d8 www.baidu.com
 ```
 
 ## HDMI / DP 显示

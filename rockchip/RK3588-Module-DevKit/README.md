@@ -392,9 +392,12 @@ cat /sys/class/drm/card*-DP-1/status
 
 ## CSI 摄像头测试
 
-摄像头型号：
+摄像头信息
 ```bash
-Raspberry Pi Camera Module 3
+传感器型号：IMX708
+摄像头型号：Raspberry Pi Camera Module 3
+SKU：114993028
+商品链接：https://www.seeedstudio.com/Raspberry-Pi-Camera-3-p-5574.html
 ```
 
 环境依赖

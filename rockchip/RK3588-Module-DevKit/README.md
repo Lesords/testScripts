@@ -27,6 +27,7 @@
 - [M.2 E-key](#m2-e-key)
     - [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
     - [蓝牙测试 (M.2 E-key)](#蓝牙测试-m2-e-key)
+    - [蓝牙音频测试 (M.2 E-key)](#蓝牙音频测试-m2-e-key)
 - [mini-PCIe](#mini-pcie)
     - [LoRa 测试 (WM1302, mini-PCIe)](#lora-测试-wm1302-mini-pcie)
     - [4G 模块测试 (EC25, mini-PCIe)](#4g-模块测试-ec25-mini-pcie)
@@ -503,6 +504,48 @@ bluetoothctl info
 bluetoothctl info <MAC>
 bluetoothctl info D0:67:94:74:3F:CD
 ```
+
+### 蓝牙音频测试 (M.2 E-key)
+
+环境安装(一次性)
+```bash
+sudo apt install pipewire-pulse wireplumber libspa-0.2-bluetooth pulseaudio-utils
+```
+
+测试步骤(每次执行,含重启后)
+```bash
+export XDG_RUNTIME_DIR=/run/user/0
+
+# ① 停掉 gdm(必须,否则 bluez sink 出不来)
+systemctl stop gdm
+
+# ② 清场:关 socket 激活(重启后 preset 会恢复 enabled,每次都要做)
+#    → 杀残留进程 → 清 socket 与锁文件
+systemctl --user disable --now pipewire.socket pipewire-pulse.socket \
+  pipewire.service wireplumber.service pipewire-pulse.service
+killall -9 pipewire wireplumber pipewire-pulse 2>/dev/null
+rm -f /run/user/0/pulse/native /run/user/0/pipewire-0 /run/user/0/pipewire-0.lock \
+      /run/user/0/pipewire-0-manager /run/user/0/pipewire-0-manager.lock
+
+# ③ 手动起三件套
+nohup pipewire        >/tmp/pw.log  2>&1 & sleep 2
+nohup wireplumber     >/tmp/wp.log  2>&1 & sleep 2
+nohup pipewire-pulse  >/tmp/pwp.log 2>&1 & sleep 4
+
+# ④ 连接耳机(首次需先配对,见上一节蓝牙测试)
+bluetoothctl -- connect D0:67:94:74:3F:CD
+
+# ⑤ 确认 bluez sink 出现,设为默认输出并拉满音量
+pactl list short sinks | grep bluez
+SINK=$(pactl list short sinks | grep bluez | cut -f2)
+pactl set-default-sink $SINK
+pactl set-sink-volume $SINK 100%
+
+# ⑥ 播放(耳机出声)
+pw-play /root/test.mp3
+```
+
+注: 重启后 gdm 与 socket 激活都会复活，复测从 ① 重新执行整个步骤块。
 
 ## mini-PCIe
 

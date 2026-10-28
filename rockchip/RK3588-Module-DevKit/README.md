@@ -637,11 +637,15 @@ ping -I enx52af5d2e88d8 www.baidu.com
 
 ## 通讯口
 
+注：
+- EVT 的开发板中 DI_1 和 DO_2 反了，需要在板子上改线
+- DI 和 DO 不共地
+
 ### DI
 
 引脚信息
 ```bash
-DI_1 - GPIO1_B6_u - 14 -> 46
+DI_1 - GPIO1_D7_u - 31 -> 63
 DI_2 - GPIO1_B7_u - 15 -> 47
 ```
 
@@ -649,9 +653,9 @@ DI_2 - GPIO1_B7_u - 15 -> 47
 ```bash
 # DI_1
 cd /sys/class/gpio
-echo 46 > ./export
-echo in > ./gpio46/direction
-cat ./gpio46/value
+echo 63 > ./export
+echo in > ./gpio63/direction
+cat ./gpio63/value
 
 # DI_2
 cd /sys/class/gpio
@@ -667,7 +671,7 @@ cat ./gpio47/value
 引脚信息
 ```bash
 DO_1 - GPIO1_D6_u - 30 -> 62
-DO_2 - GPIO1_D7_u - 31 -> 63
+DO_2 - GPIO1_B6_u - 14 -> 46
 ```
 
 控制方法
@@ -680,9 +684,9 @@ echo 1 > ./gpio62/value
 
 # DO_2
 cd /sys/class/gpio
-echo 63 > ./export
-echo out > ./gpio63/direction
-echo 1 > ./gpio63/value
+echo 46 > ./export
+echo out > ./gpio46/direction
+echo 1 > ./gpio46/value
 ```
 
 注：默认不导通，输出为 1 时导通，无法输出高电平

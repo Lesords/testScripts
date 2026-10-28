@@ -507,13 +507,11 @@ bluetoothctl info D0:67:94:74:3F:CD
 
 ### 蓝牙音频测试 (M.2 E-key)
 
-环境安装(一次性)
+方法一（手动起音频栈，独立于桌面环境）
 ```bash
+# 环境安装(一次性)
 sudo apt install pipewire-pulse wireplumber libspa-0.2-bluetooth pulseaudio-utils
-```
 
-测试步骤(每次执行,含重启后)
-```bash
 export XDG_RUNTIME_DIR=/run/user/0
 
 # ① 停掉 gdm(必须,否则 bluez sink 出不来)
@@ -546,6 +544,29 @@ pw-play /root/test.mp3
 ```
 
 注: 重启后 gdm 与 socket 激活都会复活，复测从 ① 重新执行整个步骤块。
+
+方法二（复用 gdm 桌面会话的音频栈，无需停服务）
+```bash
+# ① 保证 gdm 在运行（桌面固件默认已运行）
+systemctl is-active gdm || systemctl start gdm
+
+# ② 连接耳机（首次需先配对，见上一节蓝牙测试）
+bluetoothctl -- trust D0:67:94:74:3F:CD
+bluetoothctl -- connect D0:67:94:74:3F:CD
+
+# ③ 借用 gdm 会话的 pulse socket（gdm-greeter 的 uid 每次启动会变，动态获取）
+UID_G=$(ls /run/user/ | grep -v ^0$ | head -1)
+PS=unix:/run/user/$UID_G/pulse/native
+
+# ④ 确认 bluez sink 出现，设为默认输出并拉满音量
+pactl --server=$PS list short sinks | grep bluez
+SINK=$(pactl --server=$PS list short sinks | grep bluez | cut -f2)
+pactl --server=$PS set-default-sink $SINK
+pactl --server=$PS set-sink-volume $SINK 100%
+
+# ⑤ 播放（耳机出声）
+paplay --server=$PS /root/test.mp3
+```
 
 ## mini-PCIe
 

@@ -17,6 +17,7 @@
 - [LED 灯](#led-灯)
 - [GPIO 扩展 PCA9535](#gpio-扩展-pca9535)
 - [eeprom](#eeprom)
+- [看门狗](#看门狗)
 - [双 RTC 测试](#双-rtc-测试)
 - [双网口测试](#双网口测试)
 - [USB 测试](#usb-测试)
@@ -285,6 +286,52 @@ echo -n "rk35xx01B0" > /sys/bus/i2c/devices/6-0050/eeprom
 printf '\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff' | \
   dd of=/sys/bus/i2c/devices/6-0050/eeprom
 ```
+
+## 看门狗
+
+安装 开门狗
+```bash
+sudo apt install watchdog
+```
+
+修改看门狗配置
+```bash
+sudo vim /etc/watchdog.conf
+```
+文件内容：
+```bash
+watchdog-device = /dev/watchdog
+
+# Set the hardware timeout (default is 1 minute)
+watchdog-timeout = 30
+
+# Set the interval between tests (should be shorter than watchdog-timeout)
+interval = 15
+
+# Set system load limits
+max-load-1 = 24
+# max-load-5 = 18
+# max-load-15 = 12
+
+# Enable real-time priority
+realtime = yes
+priority = 1
+```
+
+启动开门狗服务
+```bash
+sudo systemctl start watchdog
+```
+
+测试 - 模拟系统崩溃情况
+```bash
+sudo sh -c "echo 1 > /proc/sys/kernel/sysrq"
+sudo sh -c "echo 'c' > /proc/sysrq-trigger"
+```
+
+成功触发之后，系统会在一定时间无响应后自动重启。
+
+注：修改配置文件之后需要重启服务才能正常使用
 
 ## 双 RTC 测试
 

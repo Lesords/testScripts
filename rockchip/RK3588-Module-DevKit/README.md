@@ -412,7 +412,7 @@ arecord -D hw:2,0 -f cd | aplay -D hw:2,0 -f cd
 cat /sys/kernel/debug/gpio | grep -i hp_DET
 ```
 
-音频配置（没有声音时）
+音频配置（播放没有声音时）
 ```bash
 amixer -c 2 cset name='Headphone'         1   > /dev/null 2>&1
 amixer -c 2 cset name='hp switch'         1   > /dev/null 2>&1
@@ -425,6 +425,37 @@ amixer -c 2 cset name='DAC RAMP RATE'     0   > /dev/null 2>&1
 amixer -c 2 cset name='DAC VOLUME'        120 > /dev/null 2>&1
 amixer -c 2 cset name='DAC OFFSET'        0   > /dev/null 2>&1
 amixer -c 2 cset name='DAC SDP SRC MUX'   0   > /dev/null 2>&1
+
+# 存住,下次开机免跑
+alsactl store
+```
+
+音频配置（录音没有声音时）
+```bash
+amixer -c 2 cset name='ADC SDP MUTE'      0   > /dev/null 2>&1   # 解除 ADC 输出静音(传输层)
+amixer -c 2 cset name='ADC RAM CLR'       0   > /dev/null 2>&1   # 停止清零 ADC RAM(数据层)
+amixer -c 2 cset name='BCLK INVERT'       0   > /dev/null 2>&1   # I2S 时钟不反相
+amixer -c 2 cset name='MCLK INVERT'       0   > /dev/null 2>&1
+amixer -c 2 cset name='ALC ENABLE'        0   > /dev/null 2>&1
+amixer -c 2 cset name='ALC MAX LEVEL'     0   > /dev/null 2>&1
+amixer -c 2 cset name='ALC MIN LEVEL'     0   > /dev/null 2>&1
+amixer -c 2 cset name='ALC WIN SIZE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='ALC AUTOMUTE GATE THRESHOLD' 0 > /dev/null 2>&1
+amixer -c 2 cset name='ALC AUTOMUTE VOLUME'         0 > /dev/null 2>&1
+amixer -c 2 cset name='ALC AUTOMUTE WINSIZE'        0 > /dev/null 2>&1
+amixer -c 2 cset name='DRC ENABLE'        0   > /dev/null 2>&1
+amixer -c 2 cset name='DRC MAX LEVEL'     0   > /dev/null 2>&1
+amixer -c 2 cset name='DRC MIN LEVEL'     0   > /dev/null 2>&1
+amixer -c 2 cset name='DRC WIN SIZE'      0   > /dev/null 2>&1
+amixer -c 2 cset name='ADC OSR'           16  > /dev/null 2>&1
+amixer -c 2 cset name='ADC SCALE'         4   > /dev/null 2>&1
+amixer -c 2 cset name='ADC RAMP RATE'     0   > /dev/null 2>&1
+amixer -c 2 cset name='ADC VOLUME'        191 > /dev/null 2>&1   # 0dB
+amixer -c 2 cset name='MIC PGA GAIN'      6   > /dev/null 2>&1   # 18dB
+amixer -c 2 cset name='ADC FS MODE'       0   > /dev/null 2>&1
+amixer -c 2 cset name='ADC INVERTED'      0   > /dev/null 2>&1
+amixer -c 2 cset name='ADC SYNC'          1   > /dev/null 2>&1
+amixer -c 2 cset name='DMIC MUX'          0   > /dev/null 2>&1   # 走模拟 AMIC
 
 # 存住,下次开机免跑
 alsactl store

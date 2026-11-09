@@ -693,6 +693,20 @@ AT 指令参考
 查询(U)SIM 卡的国际移动用户识别码：AT+CIMI
 ```
 
+配置热插拔的 AT 指令
+```bash
+AT+QSIMDET=1,0
+AT+QSIMSTAT=1
+AT+CFUN=1,1
+
+# 预期结果：
+## 拔出 SIM 卡
++CPIN: NOT READY
+
+## 插入 SIM 卡
++CPIN: READY
+```
+
 DNS 配置操作
 ```bash
 # 打开配置文件

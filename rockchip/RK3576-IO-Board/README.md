@@ -844,7 +844,7 @@ armbian-ota start <ota-package>
 armbian-ota start ./Armbian-unofficial_26.08.0-trunk_Recomputer-rk3576-module-devkit_noble_vendor_6.1.115_gnome_desktop_RECOVERY_OTA.tar.gz
 
 # 查看 OTA 升级状态
-atmbian-ota status
+armbian-ota status
 ```
 
 AB 分区固件

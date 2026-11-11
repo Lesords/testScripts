@@ -10,6 +10,7 @@
 - [风扇](#风扇)
 - [eeprom](#eeprom)
 - [压力测试步骤](#压力测试步骤)
+- [eMMC 老化测试](#emmc-老化测试)
 - [GPU 测试步骤](#gpu-测试步骤)
 - [NPU 测试步骤](#npu-测试步骤)
 - [CSI 摄像头](#csi-摄像头)
@@ -179,6 +180,23 @@ stress_test.sh
 使用方法
 ```bash
 ./stress_test.sh
+```
+
+## eMMC 老化测试
+
+SD 卡启动后整盘裸测模块 eMMC
+
+```bash
+# 部署脚本
+scp ./scripts/emmc-aging-test.sh root@<IP_ADDRESS>:/root
+
+# 只读预检(不写 eMMC,任何启动方式都可跑)
+for d in /sys/block/mmcblk*; do echo "$d: $(cat $d/device/type 2>/dev/null)"; done  # eMMC=MMC,SD=SD
+mmc extcsd read /dev/mmcblk0 | grep -E 'Pre EOL|Life Time'
+
+# 试跑 1 轮确认链路,再正式跑(全部参数: ./emmc-aging-test.sh -h)
+./emmc-aging-test.sh -n 1
+./emmc-aging-test.sh -n 20 -y
 ```
 
 ## GPU 测试步骤

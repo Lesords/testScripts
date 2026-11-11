@@ -318,6 +318,8 @@ realtime = yes
 priority = 1
 ```
 
+注：`max-load-1` 限制 1 分钟平均负载，超过 24 就触发看门狗重启，满载情况下可以改大或注释掉。
+
 启动开门狗服务
 ```bash
 sudo systemctl start watchdog

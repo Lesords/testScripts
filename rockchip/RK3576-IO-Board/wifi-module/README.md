@@ -212,3 +212,28 @@ FwBt:   /lib/firmware/wq9201_fw_bt_1_1_mp.bin
 定频模式需要先在设备中使用 load_ko.sh 脚本加载驱动。
 然后断开串口连接，在上位机软件中选择对应的串口开始初始化即可
 ```
+
+### 蓝牙定频 fail 问题
+
+问题描述
+```bash
+蓝牙定频 fail
+fail 的点是：BT EDR 3DH1 DTM PRBS9 LVL3 CH78 BZ
+现象是：下降沿底部不光滑，有杂波
+```
+
+解决方法
+```bash
+需要把蓝牙固件升级到供应商提供的最新版本(供应商自己的板子用这个固件是可以 pass 的)
+```
+
+新旧固件对比
+```bash
+# 旧固件信息
+> md5sum ./wq9201_fw_bt_1_1_mp.bin
+d24119510184473fbe7a2c1230ae3f22  ./wq9201_fw_bt_1_1_mp.bin
+
+# 新固件信息
+> md5sum ./wq9201_fw_bt_1_1_mp.bin
+686524cebada29afc7aee2359ced31bf  ./wq9201_fw_bt_1_1_mp.bin
+```

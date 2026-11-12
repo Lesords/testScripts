@@ -7,6 +7,9 @@
   - [账号信息](#账号信息)
   - [使用注意事项](#使用注意事项)
   - [EMMC 启动](#emmc-启动)
+- [LED](#led)
+- [WiFi](#WiFi)
+- [蓝牙](#蓝牙)
 
 ## 设备相关
 
@@ -71,4 +74,44 @@ sudo mmc bootbus set single_backward x1 x8 /dev/mmcblk0
 ums 0 mmc 0
 
 # 然后会在主机中挂载 emmc 分区内容，使用对应的工具刷写固件到 emmc 分区
+```
+
+## LED
+
+```bash
+cd /sys/class/leds/
+# 打开 LED
+echo 1 > ./USR0/brightness
+echo 1 > ./USR1/brightness
+echo 1 > ./USR2/brightness
+echo 1 > ./USR3/brightness
+
+# 关闭 LED
+echo 0 > ./USR0/brightness
+echo 0 > ./USR1/brightness
+echo 0 > ./USR2/brightness
+echo 0 > ./USR3/brightness
+```
+
+## WiFi
+
+```bash
+# 查看 wlan0 网卡信息
+ip link | grep -i wlan0
+
+# 查看网络状态
+wpa_cli -i wlan0 status
+
+# 扫描网络
+## 开始扫描
+wpa_cli -i wlan0 scan
+## 查看扫描结果
+wpa_cli -i wlan0 scan_results
+```
+
+## 蓝牙
+
+```bash
+# 查看蓝牙状态
+hciconfig
 ```

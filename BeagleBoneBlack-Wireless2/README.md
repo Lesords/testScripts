@@ -10,6 +10,7 @@
 - [LED](#led)
 - [WiFi](#WiFi)
 - [蓝牙](#蓝牙)
+- [MCU-ADC](#mcu-adc)
 
 ## 设备相关
 
@@ -114,4 +115,71 @@ wpa_cli -i wlan0 scan_results
 ```bash
 # 查看蓝牙状态
 hciconfig
+```
+
+## MCU-ADC
+
+芯片状态相关
+```bash
+# BSL(可烧录态)
+需要上拉 invoke 引脚，然后重新上电
+
+# PCU(运行态)
+不要上拉 invoke 引脚，芯片上电后即可运行
+```
+
+固件刷入
+```bash
+# 探测芯片
+openocd -f ./configs/mspm0_probe.cfg -c "init" -c "targets" -c "shutdown"
+# 注：PCU 状态下无法识别到芯片，需要进入 BSL 后再探测
+# 无法识别的日志为：Error: Error connecting DP: cannot read IDR
+
+# 探测成功后可以直接刷固件，命令如下
+openocd -f configs/bbw2_mspm0_flash.cfg \
+  -c "init" -c "targets" \
+  -c "program firmwares/pcu_bbw2.bin 0 verify" \
+  -c "reset run" -c "shutdown"
+# 注：烧录完后需要拔掉 invoke，然后复位下芯片
+
+# 芯片复位
+gpioset -c gpiochip3 0=0 >/dev/null 2>&1 & P=$!; sleep 0.3; kill -9 $P 2>/dev/null; gpioset -c gpiochip3 0=1 >/dev/null 2>&1 & P=$!; sleep 0.3; kill -9 $P 2>/dev/null
+
+# 这个时候只能扫描到芯片地址，需要重启设备，MCU 芯片才会重新工作
+```
+
+查看芯片是否正常工作
+```bash
+# 查看 I2C 设备
+i2cdetect -r -y 1
+# 0x20=ADC 0x50=EEPROM 在线即正常
+```
+
+查看 ADC 值
+```bash
+cd /sys/bus/iio/devices/iio\:device0
+
+# ADC_CH0
+cat in_voltage0_raw
+
+# ADC_CH1
+cat in_voltage1_raw
+
+# ADC_CH2
+cat in_voltage2_raw
+
+# ADC_CH3
+cat in_voltage3_raw
+
+# ADC_CH4
+cat in_voltage4_raw
+
+# ADC_CH5
+cat in_voltage5_raw
+
+# ADC_CH6
+cat in_voltage6_raw
+
+# ADC_CH7
+cat in_voltage7_raw
 ```

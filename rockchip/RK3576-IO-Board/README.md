@@ -153,9 +153,15 @@ printf 'B8:AE:1F:00:00:01' | \
 printf 'FF:AE:1F:00:00:01' | \
   dd of=/sys/bus/i2c/devices/2-0050/eeprom bs=1 seek=32 conv=notrunc
 
+# 清空 board code
+printf "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff" > /sys/bus/i2c/devices/2-0050/eeprom
+
 # 清空 mac 地址
 printf '\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff' | \
   dd of=/sys/bus/i2c/devices/2-0050/eeprom bs=1 seek=32 conv=notrunc
+
+# 写入全内容
+echo -n "rk35xx01A0SN262500007123456789..B8:AE:1F:00:00:01" > /sys/bus/i2c/devices/2-0050/eeprom
 ```
 
 注意：

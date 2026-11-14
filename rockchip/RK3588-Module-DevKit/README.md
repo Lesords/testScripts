@@ -25,6 +25,7 @@
 - [HDMI / DP 显示](#hdmi--dp-显示)
 - [CSI 摄像头测试](#csi-摄像头测试)
 - [M.2 NVMe 测试 (PCIe3x4)](#m2-nvme-测试-pcie3x4)
+- [Hailo-8 测试 (M.2 Key M)](#hailo-8-测试-m2-key-m)
 - [M.2 E-key](#m2-e-key)
     - [WiFi 测试 (M.2 E-key)](#wifi-测试-m2-e-key)
     - [蓝牙测试 (M.2 E-key)](#蓝牙测试-m2-e-key)
@@ -524,6 +525,50 @@ sudo nvme smart-log /dev/nvme0
 dd if=/dev/nvme0n1 of=/tmp/t bs=1M count=512 oflag=direct
 dd if=/tmp/t of=/dev/null bs=1M count=512 iflag=direct
 ```
+
+## Hailo-8 测试 (M.2 Key M)
+
+包路径：`hailo/*.deb`
+
+安装与验证
+```bash
+# ① 推包
+scp ./hailo/hailort*.deb root@<IP_ADDRESS>:/root/
+
+# ② 板上装两个包
+dpkg -i /root/hailort*.deb
+
+# ③ 验收：模块已自动加载 + 设备节点 + 服务
+lsmod | grep hailo
+ls -l /dev/hailo0
+systemctl is-active hailort
+
+# ④ 端到端：板卡识别
+hailortcli scan
+## 预期结果：可以查看到 Device 地址
+hailortcli fw-control identify
+## 预期结果：可以看到 Hailo-8 M.2 Key M 等信息
+```
+
+注：安装末尾 "Please reboot your computer..." 为固定打印，无需理会；
+`/dev/hailo0` 若为 root-only，重启后按 udev 规则变 0666。
+
+吞吐量测试
+```bash
+# ① 拉取模型 yolov8s.hef
+wget -c https://hailo-model-zoo.s3.eu-west-2.amazonaws.com/ModelZoo/Compiled/v2.14.0/hailo8/yolov8s.hef
+
+# ② 模型解析（输入 640x640x3 UINT8）
+hailortcli parse-hef ./yolov8s.hef
+
+# ③ 满载推理 10 秒
+hailortcli run ./yolov8s.hef --time-to-run 10
+
+# ④ 基准测试（HW-only FPS / streaming FPS / 硬件延迟）
+hailortcli benchmark ./yolov8s.hef
+```
+
+注：实测 yolov8s(640x640)= 210 FPS 左右，HW 延迟 7.35 ms 左右
 
 ## M.2 E-key
 

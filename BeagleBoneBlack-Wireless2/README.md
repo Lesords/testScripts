@@ -4,6 +4,7 @@
 
 - [设备相关](#设备相关)
   - [DFU 模式](#dfu-模式)
+  - [JTAG](#jtag)
   - [账号信息](#账号信息)
   - [使用注意事项](#使用注意事项)
   - [EMMC 启动](#emmc-启动)
@@ -33,6 +34,25 @@ Windows 需要查看 设备管理器 中是否有 DFU 设备
 ```
 
 参考链接: https://software-dl.ti.com/processor-sdk-linux/esd/AM62X/latest/exports/docs/linux/Foundational_Components/U-Boot/UG-DFU.html
+
+### JTAG
+
+配置文件位置：`configs/bbw2_jtag.cfg`
+
+```bash
+# 启动 OpenOCD 调试服务：接管探针、扫链识别目标
+openocd -f configs/bbw2_jtag.cfg
+# 预期结果：Info : JTAG tap: am625.cpu tap/device found: 0x0bb7e02f (mfg: 0x017 (Texas Instruments), part: 0xbb7e, ver: 0x0)
+
+# 连接调试端口（另外一个终端）
+telnet localhost 4444
+## 列出全部目标（4×A53 / R5 / sysctrl / M4）
+targets
+## 关闭
+shutdown
+```
+
+参考链接：https://software-dl.ti.com/processor-sdk-linux/esd/AM62X/latest/exports/docs/linux/Foundational_Components/U-Boot/Apps-SPL-Debug-OpenOCD.html
 
 ### 账号信息
 

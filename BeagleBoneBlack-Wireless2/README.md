@@ -133,10 +133,20 @@ wpa_cli -i wlan0 scan_results
 
 ## 蓝牙
 
+查看蓝牙状态
 ```bash
-# 查看蓝牙状态
 hciconfig
 ```
+
+开启低功耗蓝牙
+```bash
+# 拷贝 ./scripts/start_bluetooth.sh 脚本到设备上, 运行脚本
+./start_bluetooth.sh
+
+# 然后使用 低功耗蓝牙工具 可以搜索到 bbw2-ble 设备，选择连接即可
+```
+
+注：蓝牙需要接天线
 
 ## MCU-ADC
 

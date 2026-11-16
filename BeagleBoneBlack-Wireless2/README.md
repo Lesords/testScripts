@@ -12,6 +12,7 @@
 - [WiFi](#WiFi)
 - [蓝牙](#蓝牙)
 - [MCU-ADC](#mcu-adc)
+- [HDMI](#hdmi)
 
 ## 设备相关
 
@@ -202,4 +203,46 @@ cat in_voltage6_raw
 
 # ADC_CH7
 cat in_voltage7_raw
+```
+
+## HDMI
+
+HDMI 状态查看
+```bash
+# 显示器 EDID 报的可用模式
+cat /sys/class/drm/card0-HDMI-A-1/modes
+
+# 查看虚拟分辨率
+cat /sys/class/graphics/fb0/virtual_size
+```
+
+终端分辨率切换步骤
+```bash
+# 安装工具
+apt update && apt install -y fbset
+
+# 查看当前可用的配置列表
+cat /etc/fb.modes
+
+# 查看当前分辨率
+fbset
+
+# 切换分辨率
+fbset -a 1280x1024-60
+fbset -a 1152x864-75
+```
+注：显示器实际上识别的分辨率没有变化
+
+输出不同分辨率的数据
+```bash
+# 安装工具
+sudo apt install -y libdrm-tests
+
+# 拿 connector 编号
+modetest -M tidss -c
+
+# 切换分辨率
+modetest -M tidss -s 44:1280x720@RG16
+modetest -M tidss -s 44:832x624@RG16
+modetest -M tidss -s 44:640x480@RG16
 ```

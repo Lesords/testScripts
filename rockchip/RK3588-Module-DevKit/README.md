@@ -232,7 +232,7 @@ echo heartbeat   > /sys/class/leds/led-act/trigger
 
 ## GPIO 扩展 PCA9535
 
-I2C0 @0x21,16 路,INT = GPIO1_D5(I2C0_INT)。全部线名(= 功能):
+I2C4 @0x21,16 路,INT = GPIO1_D5_d(Pin 112)。全部线名(= 功能):
 
 | 线 | 名称 | 功能 | 线 | 名称 | 功能 |
 | ---- | ---- | ---- | ---- | ---- | ---- |
@@ -254,6 +254,7 @@ gpiodetect | grep 4-0021
 
 # 查看引脚信息
 gpioinfo -c gpiochip6
+cat /sys/kernel/debug/gpio | grep -i 4-0021 -A 18
 
 # 根据名字来查看引脚信息
 gpioinfo HP_CTL_H
@@ -872,6 +873,7 @@ echo 1 > ./gpio499/value
 
 # 拉高 RS485_2_120R_EN, 参考上诉步骤，把 499 改为 500 即可
 ```
+注：`5V_ISO_OUT_EN` 默认拉高的话，无需手动拉高
 
 ```bash
 # 安装工具

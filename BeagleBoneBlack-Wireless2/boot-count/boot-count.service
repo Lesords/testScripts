@@ -1,0 +1,10 @@
+[Unit]
+Description=Boot counter (power-cycle test)
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/boot-count.sh
+
+[Install]
+WantedBy=multi-user.target

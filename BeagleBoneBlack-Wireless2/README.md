@@ -13,6 +13,8 @@
 - [蓝牙](#蓝牙)
 - [MCU-ADC](#mcu-adc)
 - [HDMI](#hdmi)
+- [脚本服务](#脚本服务)
+  - [循环上电计数](#循环上电计数)
 
 ## 设备相关
 
@@ -255,4 +257,25 @@ modetest -M tidss -c
 modetest -M tidss -s 44:1280x720@RG16
 modetest -M tidss -s 44:832x624@RG16
 modetest -M tidss -s 44:640x480@RG16
+```
+
+## 脚本服务
+
+### 循环上电计数
+
+```bash
+# 拷贝脚本和服务到设备上
+scp ./boot-count/boot-count.sh root@<IP_ADDRESS>:/usr/local/sbin/
+scp ./boot-count/boot-count.service  root@<IP_ADDRESS>:/etc/systemd/system/
+
+# 例子
+scp ./boot-count/boot-count.sh root@10.0.0.240:/usr/local/sbin/
+scp ./boot-count/boot-count.service  root@10.0.0.240:/etc/systemd/system/
+
+# 启动服务
+systemctl daemon-reload && systemctl enable --now boot-count.service
+
+# 查看结果
+cat /var/lib/boot-count
+cat /var/lib/boot-log
 ```

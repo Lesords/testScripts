@@ -259,6 +259,15 @@ modetest -M tidss -s 44:832x624@RG16
 modetest -M tidss -s 44:640x480@RG16
 ```
 
+HDMI 音频测试
+```bash
+# 安装工具
+sudo apt update && sudo apt install -y alsa-utils mpg123
+
+# 播放音频(需要提前拷贝 test.mp3 到设备上)
+mpg123 -a hw:0,0 ./test.mp3
+```
+
 ## 脚本服务
 
 ### 循环上电计数

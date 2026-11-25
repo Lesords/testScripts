@@ -713,7 +713,11 @@ make
 # 运行
 cd packet_forwarder/
 sudo ./lora_pkt_fwd -c global_conf.json.sx1250.US915
+# Or
+sudo ./lora_pkt_fwd -c global_conf.json.sx1250.EU868
 ```
+
+注：WM1302 模块有两个版本, US915 和 EU868, 需要根据实际模块选择对应的配置文件
 
 ### 4G 模块测试 (EC25, mini-PCIe)
 
@@ -725,6 +729,8 @@ lsusb | grep -i EC25
 # 查看串口节点
 ls /dev/ttyUSB*
 ```
+
+注：识别到 4g 模块 的话 `M2B_PCIe_Reset_1V8` 需要为高电平
 
 模块串口使用命令
 ```bash

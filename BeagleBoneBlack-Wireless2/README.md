@@ -339,24 +339,26 @@ cat /sys/class/drm/card0-HDMI-A-1/modes
 cat /sys/class/graphics/fb0/virtual_size
 ```
 
-终端分辨率切换步骤
+修改默认的分辨率
 ```bash
-# 安装工具
-apt update && apt install -y fbset
+# 打开配置文件
+vi /boot/firmware/extlinux/extlinux.conf
 
-# 查看当前可用的配置列表
-cat /etc/fb.modes
+# 找到需要修改的选项，在 append 末尾添加对应的启动参数 video=HDMI-A-1:1920x1080@50
+# 如下所示：
+    append console=ttyS2,115200n8 earlycon=ns16550a,mmio32,0x02800000 root=/dev/mmcblk0p3 ro rootfstype=ext4 fsck.repair=yes rootwait net.ifnames=0  video=HDMI-A-1:1920x1080@30
 
-# 查看当前分辨率
-fbset
-
-# 切换分辨率
-fbset -a 1280x1024-60
-fbset -a 1152x864-75
+# 完整例子
+label emmc-root-1080p-30
+    kernel /Image.gz
+    append console=ttyS2,115200n8 earlycon=ns16550a,mmio32,0x02800000 root=/dev/mmcblk0p3 ro rootfstype=ext4 fsck.repair=yes rootwait net.ifnames=0  video=HDMI-A-1:1920x1080@30
+    fdtdir /
+    fdtoverlays /ti/k3-am6254-bbw2-exp-gpio.dtbo
+# 注：不同启动项目的配置不一样，所以可以基于想要的启动项来修改
 ```
-注：显示器实际上识别的分辨率没有变化
+注：纯终端界面无法运行中动态修改分辨率
 
-输出不同分辨率的数据
+输出不同分辨率的测试数据
 ```bash
 # 安装工具
 sudo apt install -y libdrm-tests
@@ -365,6 +367,7 @@ sudo apt install -y libdrm-tests
 modetest -M tidss -c
 
 # 切换分辨率
+modetest -M tidss -s 44:1920x1080@RG16
 modetest -M tidss -s 44:1280x720@RG16
 modetest -M tidss -s 44:832x624@RG16
 modetest -M tidss -s 44:640x480@RG16

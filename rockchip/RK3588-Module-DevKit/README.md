@@ -378,6 +378,17 @@ ethtool end0 | grep -E 'Speed|Link detected'
 ethtool end1 | grep -E 'Speed|Link detected'
 ```
 
+网口眼图测试
+
+```bash
+# 先拷贝 ./tools/rtwftool-armel 工具到设备中
+scp ./tools/rtwftool-armel root@<IP_ADDRESS>:/root/
+
+# 使用命令
+sudo ./rtwftool-armel end0
+# 注：此工具主要是给 RTL8111H 测试用
+```
+
 ## USB 测试
 
 ```bash

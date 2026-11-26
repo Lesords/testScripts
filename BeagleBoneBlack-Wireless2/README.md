@@ -169,22 +169,19 @@ scp ./scripts/bbw2-gpio-tui.sh root@<IP_ADDRESS>:/root/
 
 ```bash
 # 拉高/拉低引脚
+## 方法一：线名（前提是有配置）
 timeout -s INT 3 gpioset P8_41=1
 timeout -s INT 3 gpioset P8_41=0
+## 方法二：chip + 线号
+timeout -s INT 3 gpioset -c gpiochip3 49=1
+timeout -s INT 3 gpioset -c gpiochip3 49=0
 
 # 读引脚状态
+## 方法一：线名
 gpioget P8_41
-# 悬空=0（下拉）；P9_11/13 上拉配置，悬空=1
-```
-
-引脚取址两种等价写法
-
-```bash
-# 线名
-gpioset P8_41=1
-
-# chip+线号（读同理：gpioget -c gpiochip3 49）
-gpioset -c gpiochip3 49=1
+## 方法二：chip + 线号
+gpioget -c gpiochip3 49
+## 预期结果：悬空=0（下拉）；P9_11/13 上拉配置，悬空=1
 ```
 
 引脚切换

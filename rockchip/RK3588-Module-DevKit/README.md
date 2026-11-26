@@ -730,7 +730,7 @@ lsusb | grep -i EC25
 ls /dev/ttyUSB*
 ```
 
-注：识别到 4g 模块 的话 `M2B_PCIe_Reset_1V8` 需要为高电平
+注：识别到 4g 模块 的话 `M2B_PCIe_Reset_1V8` 需要为高电平，引脚编号为 `GPIO104`
 
 模块串口使用命令
 ```bash

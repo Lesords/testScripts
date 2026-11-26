@@ -8,6 +8,7 @@
   - [账号信息](#账号信息)
   - [使用注意事项](#使用注意事项)
   - [EMMC 启动](#emmc-启动)
+  - [EMMC 内容清空](#emmc-内容清空)
 - [LED](#led)
 - [GPIO 扩展排针](#gpio-扩展排针)
 - [WiFi](#WiFi)
@@ -99,6 +100,47 @@ sudo mmc bootbus set single_backward x1 x8 /dev/mmcblk0
 ums 0 mmc 0
 
 # 然后会在主机中挂载 emmc 分区内容，使用对应的工具刷写固件到 emmc 分区
+```
+
+### EMMC 内容清空
+
+适用场景
+```bash
+SD 卡启动后有可能会挂载到 emmc 的分区去
+
+# 分区挂载情况如下
+root@BeagleBone:~# lsblk
+NAME         MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+mmcblk0      179:0    0 14.6G  0 disk
+|-mmcblk0p1  179:1    0  256M  0 part /boot/firmware
+|-mmcblk0p2  179:2    0  512M  0 part [SWAP]
+`-mmcblk0p3  179:3    0  5.4G  0 part
+mmcblk0boot0 179:32   0    4M  1 disk
+mmcblk0boot1 179:64   0    4M  1 disk
+mmcblk1      179:96   0 29.7G  0 disk
+|-mmcblk1p1  179:97   0  256M  0 part
+|-mmcblk1p2  179:98   0  512M  0 part
+`-mmcblk1p3  179:99   0   29G  0 part /
+```
+
+使用步骤
+```bash
+# ① 摘掉 eMMC 的两个占用（顺序：先 swap 后挂载点）
+sudo swapoff /dev/mmcblk0p2
+sudo umount /boot/firmware
+# 注：只有出现上面描述的情况才需要这两个命令
+# |-mmcblk0p1  179:1    0  256M  0 part /boot/firmware
+# |-mmcblk0p2  179:2    0  512M  0 part [SWAP]
+
+# ② UDA 清空（TRIM 秒级，签名/分区表连同内容一起作废）
+sudo blkdiscard /dev/mmcblk0 -f
+# 注：清空前必须在启动的时候指定 sd 卡分区
+
+# ③ boot0/boot1 清零（tiboot3 所在）
+echo 0 | sudo tee /sys/class/block/mmcblk0boot0/force_ro
+echo 0 | sudo tee /sys/class/block/mmcblk0boot1/force_ro
+sudo dd if=/dev/zero of=/dev/mmcblk0boot0 bs=1M count=4 conv=fsync
+sudo dd if=/dev/zero of=/dev/mmcblk0boot1 bs=1M count=4 conv=fsync
 ```
 
 ## LED

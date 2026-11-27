@@ -10,6 +10,7 @@
 - [模块](#模块)
   - [lora (EVT only)](#lora-evt-only)
   - [EMMC (EVT only)](#emmc-evt-only)
+  - [WiFi](#wifi)
   - [蓝牙](#蓝牙)
   - [WiFi RF 定频](#wifi-rf-定频)
   - [蓝牙 RF 定频](#蓝牙-rf-定频)
@@ -123,6 +124,18 @@ cd /sys/class/gpio/
 echo 513 > ./export
 echo out > ./gpio513/direction
 echo 1 > ./gpio513/value
+```
+
+### WiFi
+
+网络连接命令
+```bash
+wpa_cli -i wlan0 add_network
+wpa_cli -i wlan0 set_network 1 ssid '"wifi"'
+wpa_cli -i wlan0 set_network 1 psk '"password"'
+
+wpa_cli -i wlan0 enable_network 1
+wpa_cli -i wlan0 select_network 1
 ```
 
 ### 蓝牙
